@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.19;
+pragma solidity ^0.8.0;
 
 import {IPool} from "../interfaces/pools/IPool.sol";
 import {IARM} from "../interfaces/IARM.sol";
@@ -74,11 +74,11 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
   EnumerableSet.UintSet internal s_remoteChainSelectors;
   /// @dev Outbound rate limits. Corresponds to the inbound rate limit for the pool
   /// on the remote chain.
-  mapping(uint64 remoteChainSelector => RateLimiter.TokenBucket) internal s_outboundRateLimits;
+  mapping(uint64 => RateLimiter.TokenBucket) internal s_outboundRateLimits;
   /// @dev Inbound rate limits. This allows per destination chain
   /// token issuer specified rate limiting (e.g. issuers may trust chains to varying
   /// degrees and prefer different limits)
-  mapping(uint64 remoteChainSelector => RateLimiter.TokenBucket) internal s_inboundRateLimits;
+  mapping(uint64 => RateLimiter.TokenBucket) internal s_inboundRateLimits;
 
   constructor(IERC20 token, address[] memory allowlist, address armProxy, address router) {
     if (address(token) == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
