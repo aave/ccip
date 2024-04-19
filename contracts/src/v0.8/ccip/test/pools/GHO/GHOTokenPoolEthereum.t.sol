@@ -5,18 +5,18 @@ import {GhoToken} from "@aave/gho-core/gho/GhoToken.sol";
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
 
 import {stdError} from "forge-std/Test.sol";
-import {BaseTest} from "../BaseTest.t.sol";
-import {IPool} from "../../interfaces/pools/IPool.sol";
-import {LockReleaseTokenPool} from "../../pools/LockReleaseTokenPool.sol";
-import {UpgradeableLockReleaseTokenPool} from "../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
-import {TokenPool} from "../../pools/TokenPool.sol";
-import {EVM2EVMOnRamp} from "../../onRamp/EVM2EVMOnRamp.sol";
-import {EVM2EVMOffRamp} from "../../offRamp/EVM2EVMOffRamp.sol";
-import {RateLimiter} from "../../libraries/RateLimiter.sol";
-import {BurnMintERC677} from "../../../shared/token/ERC677/BurnMintERC677.sol";
-import {Router} from "../../Router.sol";
-import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
-import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+import {IPool} from "../../../interfaces/pools/IPool.sol";
+import {LockReleaseTokenPool} from "../../../pools/LockReleaseTokenPool.sol";
+import {UpgradeableLockReleaseTokenPool} from "../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
+import {TokenPool} from "../../../pools/TokenPool.sol";
+import {EVM2EVMOnRamp} from "../../../onRamp/EVM2EVMOnRamp.sol";
+import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
+import {RateLimiter} from "../../../libraries/RateLimiter.sol";
+import {BurnMintERC677} from "../../../../shared/token/ERC677/BurnMintERC677.sol";
+import {Router} from "../../../Router.sol";
+import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
+import {IERC20} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 import {GHOTokenPoolEthereumSetup} from "./GHOTokenPoolEthereumSetup.t.sol";
 
 contract GHOTokenPoolEthereum_setRebalancer is GHOTokenPoolEthereumSetup {

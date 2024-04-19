@@ -5,14 +5,14 @@ import {GhoToken} from "@aave/gho-core/gho/GhoToken.sol";
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
 
 import {stdError} from "forge-std/Test.sol";
-import {BaseTest} from "../BaseTest.t.sol";
-import {TokenPool} from "../../pools/TokenPool.sol";
-import {EVM2EVMOnRamp} from "../../onRamp/EVM2EVMOnRamp.sol";
-import {EVM2EVMOffRamp} from "../../offRamp/EVM2EVMOffRamp.sol";
-import {BurnMintERC677} from "../../../shared/token/ERC677/BurnMintERC677.sol";
-import {BurnMintTokenPool} from "../../pools/BurnMintTokenPool.sol";
-import {UpgradeableBurnMintTokenPool} from "../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
-import {RateLimiter} from "../../libraries/RateLimiter.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+import {TokenPool} from "../../../pools/TokenPool.sol";
+import {EVM2EVMOnRamp} from "../../../onRamp/EVM2EVMOnRamp.sol";
+import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
+import {BurnMintERC677} from "../../../../shared/token/ERC677/BurnMintERC677.sol";
+import {BurnMintTokenPool} from "../../../pools/BurnMintTokenPool.sol";
+import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {GHOTokenPoolRemoteSetup} from "./GHOTokenPoolRemoteSetup.t.sol";
 
 contract GHOTokenPoolRemote_lockOrBurn is GHOTokenPoolRemoteSetup {
