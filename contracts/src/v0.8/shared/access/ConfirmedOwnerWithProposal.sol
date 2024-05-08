@@ -45,10 +45,7 @@ contract ConfirmedOwnerWithProposal is IOwnable {
   }
 
   /// @notice validate, transfer ownership, and emit relevant events
-  function _transferOwnership(address to) private {
-    // solhint-disable-next-line custom-errors
-    require(to != msg.sender, "Cannot transfer to self");
-
+  function _transferOwnership(address to) internal {
     s_pendingOwner = to;
 
     emit OwnershipTransferRequested(s_owner, to);
