@@ -18,8 +18,8 @@ block_number = 12345
 
 [profile.ccip]
 solc_version = '0.8.19'
-src = 'src/v0.8/ccip'
-test = 'src/v0.8/ccip/test'
+src = 'src/v0.8/ccip/pools'
+test = 'src/v0.8/ccip/test/pools/GHO'
 optimizer_runs = 10_000
 
 [profile.functions]
