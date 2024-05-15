@@ -36,7 +36,16 @@ contract TokenSetup is RouterSetup {
       s_sourceTokens.push(address(sourceLink));
       s_sourcePools.push(
         address(
-          new LockReleaseTokenPool(sourceLink, new address[](0), address(s_mockARM), true, address(s_sourceRouter))
+          _deployUpgradeableLockReleaseTokenPool({
+            ghoToken: address(sourceLink),
+            arm: address(s_mockARM),
+            router: address(s_sourceRouter),
+            owner: OWNER,
+            bridgeLimit: BRIDGE_LIMIT,
+            proxyAdmin: PROXY_ADMIN,
+            allowlist: new address[](0),
+            acceptLiquidity: true
+          })
         )
       );
 
@@ -44,7 +53,14 @@ contract TokenSetup is RouterSetup {
       deal(address(sourceETH), OWNER, 2 ** 128);
       s_sourceTokens.push(address(sourceETH));
       s_sourcePools.push(
-        address(new BurnMintTokenPool(sourceETH, new address[](0), address(s_mockARM), address(s_sourceRouter)))
+        _deployUpgradeableBurnMintTokenPool({
+          ghoToken: address(sourceETH),
+          arm: address(s_mockARM),
+          router: address(s_sourceRouter),
+          owner: OWNER,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0)
+        })
       );
       sourceETH.grantMintAndBurnRoles(s_sourcePools[1]);
     }
@@ -57,7 +73,16 @@ contract TokenSetup is RouterSetup {
       deal(address(destLink), OWNER, type(uint256).max);
       s_destTokens.push(address(destLink));
       s_destPools.push(
-        address(new LockReleaseTokenPool(destLink, new address[](0), address(s_mockARM), true, address(s_destRouter)))
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(destLink),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       );
 
       BurnMintERC677 destEth = new BurnMintERC677("dETH", "dETH", 18, 0);

@@ -115,12 +115,17 @@ contract EVM2EVMOffRamp_constructor is EVM2EVMOffRampSetup {
   function testZeroOnRampAddressReverts() public {
     IPool[] memory pools = new IPool[](2);
     pools[0] = IPool(s_sourcePools[0]);
-    pools[1] = new LockReleaseTokenPool(
-      IERC20(s_sourceTokens[1]),
-      new address[](0),
-      address(s_mockARM),
-      true,
-      address(s_destRouter)
+    pools[1] = IPool(
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(s_sourceTokens[1]),
+        arm: address(s_mockARM),
+        router: address(s_destRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0),
+        acceptLiquidity: true
+      })
     );
 
     vm.expectRevert(EVM2EVMOffRamp.ZeroAddressNotAllowed.selector);
@@ -364,6 +369,9 @@ contract EVM2EVMOffRamp_execute is EVM2EVMOffRampSetup {
     vm.expectEmit();
     emit SkippedIncorrectNonce(messages[1].nonce, messages[1].sender);
 
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.execute(_generateReportFromMessages(messages), new uint256[](0));
   }
 
@@ -430,6 +438,10 @@ contract EVM2EVMOffRamp_execute is EVM2EVMOffRampSetup {
     Internal.ExecutionReport memory report = _generateReportFromMessages(messages);
 
     vm.resumeGasMetering();
+
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.execute(report, new uint256[](0));
   }
 
@@ -456,6 +468,10 @@ contract EVM2EVMOffRamp_execute is EVM2EVMOffRampSetup {
     );
 
     assertEq(uint64(0), s_offRamp.getSenderNonce(OWNER));
+
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.execute(_generateReportFromMessages(messages), _getGasLimitsFromMessages(messages));
     assertEq(uint64(2), s_offRamp.getSenderNonce(OWNER));
   }
@@ -814,6 +830,9 @@ contract EVM2EVMOffRamp_executeSingleMessage is EVM2EVMOffRampSetup {
       )
     );
 
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.executeSingleMessage(message, offchainTokenData);
   }
 
@@ -833,6 +852,10 @@ contract EVM2EVMOffRamp_executeSingleMessage is EVM2EVMOffRampSetup {
     emit Minted(address(s_offRamp), STRANGER, amounts[1]);
     Internal.EVM2EVMMessage memory message = _generateAny2EVMMessageWithTokens(1, amounts);
     message.receiver = STRANGER;
+
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.executeSingleMessage(message, new bytes[](message.tokenAmounts.length));
   }
 
@@ -849,6 +872,9 @@ contract EVM2EVMOffRamp_executeSingleMessage is EVM2EVMOffRampSetup {
     MaybeRevertingBurnMintTokenPool(s_destPools[1]).setShouldRevert(errorMessage);
 
     vm.expectRevert(abi.encodeWithSelector(EVM2EVMOffRamp.TokenHandlingError.selector, errorMessage));
+
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
 
     s_offRamp.executeSingleMessage(message, new bytes[](message.tokenAmounts.length));
   }
@@ -1057,6 +1083,9 @@ contract EVM2EVMOffRamp_manuallyExecute is EVM2EVMOffRampSetup {
       )
     );
 
+    // Tweak current bridged amount on destination
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.manuallyExecute(report, _getGasLimitsFromMessages(messages));
 
     // Since the tx failed we don't release the tokens
@@ -1155,6 +1184,9 @@ contract EVM2EVMOffRamp__trialExecute is EVM2EVMOffRampSetup {
     IERC20 dstToken0 = IERC20(s_destTokens[0]);
     uint256 startingBalance = dstToken0.balanceOf(message.receiver);
 
+    // Tweak current bridged amount on destination
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     (Internal.MessageExecutionState newState, bytes memory err) = s_offRamp.trialExecute(
       message,
       new bytes[](message.tokenAmounts.length)
@@ -1179,6 +1211,9 @@ contract EVM2EVMOffRamp__trialExecute is EVM2EVMOffRampSetup {
     Internal.EVM2EVMMessage memory message = _generateAny2EVMMessageWithTokens(1, amounts);
     MaybeRevertingBurnMintTokenPool(s_destPools[1]).setShouldRevert(errorMessage);
 
+    // Tweak current bridged amount on destination
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     (Internal.MessageExecutionState newState, bytes memory err) = s_offRamp.trialExecute(
       message,
       new bytes[](message.tokenAmounts.length)
@@ -1199,6 +1234,9 @@ contract EVM2EVMOffRamp__trialExecute is EVM2EVMOffRampSetup {
 
     Internal.EVM2EVMMessage memory message = _generateAny2EVMMessageWithTokens(1, amounts);
     MaybeRevertingBurnMintTokenPool(s_destPools[1]).setShouldRevert(errorMessage);
+
+    // Tweak current bridged amount on destination
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
 
     (Internal.MessageExecutionState newState, bytes memory err) = s_offRamp.trialExecute(
       message,
@@ -1236,6 +1274,9 @@ contract EVM2EVMOffRamp__releaseOrMintTokens is EVM2EVMOffRampSetup {
         abi.encode(sourceTokenData[0], offchainTokenData[0])
       )
     );
+
+    // Tweak current bridged amount on destination
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
 
     s_offRamp.releaseOrMintTokens(srcTokenAmounts, originalSender, OWNER, sourceTokenData, offchainTokenData);
 
@@ -1322,7 +1363,16 @@ contract EVM2EVMOffRamp_applyPoolUpdates is EVM2EVMOffRampSetup {
     adds[0] = Internal.PoolUpdate({
       token: address(1),
       pool: address(
-        new LockReleaseTokenPool(IERC20(address(1)), new address[](0), address(s_mockARM), true, address(s_destRouter))
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(1),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       )
     });
 
@@ -1356,13 +1406,31 @@ contract EVM2EVMOffRamp_applyPoolUpdates is EVM2EVMOffRampSetup {
     adds[0] = Internal.PoolUpdate({
       token: address(1),
       pool: address(
-        new LockReleaseTokenPool(IERC20(address(1)), new address[](0), address(s_mockARM), true, address(s_destRouter))
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(1),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       )
     });
     adds[1] = Internal.PoolUpdate({
       token: address(1),
       pool: address(
-        new LockReleaseTokenPool(IERC20(address(1)), new address[](0), address(s_mockARM), true, address(s_destRouter))
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(1),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       )
     });
 
@@ -1391,7 +1459,16 @@ contract EVM2EVMOffRamp_applyPoolUpdates is EVM2EVMOffRampSetup {
     removes[0] = Internal.PoolUpdate({
       token: address(1),
       pool: address(
-        new LockReleaseTokenPool(IERC20(address(1)), new address[](0), address(s_mockARM), true, address(s_destRouter))
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(1),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       )
     });
 
@@ -1405,7 +1482,16 @@ contract EVM2EVMOffRamp_applyPoolUpdates is EVM2EVMOffRampSetup {
     adds[0] = Internal.PoolUpdate({
       token: address(1),
       pool: address(
-        new LockReleaseTokenPool(IERC20(address(1)), new address[](0), address(s_mockARM), true, address(s_destRouter))
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(1),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       )
     });
     s_offRamp.applyPoolUpdates(new Internal.PoolUpdate[](0), adds);
@@ -1414,13 +1500,16 @@ contract EVM2EVMOffRamp_applyPoolUpdates is EVM2EVMOffRampSetup {
     removes[0] = Internal.PoolUpdate({
       token: address(1),
       pool: address(
-        new LockReleaseTokenPool(
-          IERC20(address(1000)),
-          new address[](0),
-          address(s_mockARM),
-          true,
-          address(s_destRouter)
-        )
+        _deployUpgradeableLockReleaseTokenPool({
+          ghoToken: address(1000),
+          arm: address(s_mockARM),
+          router: address(s_destRouter),
+          owner: OWNER,
+          bridgeLimit: BRIDGE_LIMIT,
+          proxyAdmin: PROXY_ADMIN,
+          allowlist: new address[](0),
+          acceptLiquidity: true
+        })
       )
     });
 

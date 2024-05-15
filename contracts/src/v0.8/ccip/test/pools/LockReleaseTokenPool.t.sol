@@ -29,22 +29,32 @@ contract LockReleaseTokenPoolSetup is RouterSetup {
     RouterSetup.setUp();
     s_token = new BurnMintERC677("LINK", "LNK", 18, 0);
     deal(address(s_token), OWNER, type(uint256).max);
-    s_lockReleaseTokenPool = new LockReleaseTokenPool(
-      s_token,
-      new address[](0),
-      address(s_mockARM),
-      true,
-      address(s_sourceRouter)
+    s_lockReleaseTokenPool = LockReleaseTokenPool(
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(s_token),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0),
+        acceptLiquidity: true
+      })
     );
 
     s_allowedList.push(USER_1);
     s_allowedList.push(DUMMY_CONTRACT_ADDRESS);
-    s_lockReleaseTokenPoolWithAllowList = new LockReleaseTokenPool(
-      s_token,
-      s_allowedList,
-      address(s_mockARM),
-      true,
-      address(s_sourceRouter)
+    s_lockReleaseTokenPoolWithAllowList = LockReleaseTokenPool(
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(s_token),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: s_allowedList,
+        acceptLiquidity: true
+      })
     );
 
     TokenPool.ChainUpdate[] memory chainUpdate = new TokenPool.ChainUpdate[](1);
@@ -168,6 +178,9 @@ contract LockReleaseTokenPool_releaseOrMint is LockReleaseTokenPoolSetup {
     vm.expectEmit();
     emit Released(s_allowedOffRamp, OWNER, amount);
 
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_lockReleaseTokenPool), type(uint128).max);
+
     s_lockReleaseTokenPool.releaseOrMint(bytes(""), OWNER, amount, SOURCE_CHAIN_SELECTOR, bytes(""));
   }
 
@@ -176,6 +189,8 @@ contract LockReleaseTokenPool_releaseOrMint is LockReleaseTokenPoolSetup {
     vm.assume(recipient != OWNER);
     vm.assume(recipient != address(0));
     vm.assume(recipient != address(s_token));
+
+    amount = bound(amount, 0, type(uint128).max);
 
     // Makes sure the pool always has enough funds
     deal(address(s_token), address(s_lockReleaseTokenPool), amount);
@@ -197,6 +212,9 @@ contract LockReleaseTokenPool_releaseOrMint is LockReleaseTokenPoolSetup {
       vm.expectEmit();
       emit Released(s_allowedOffRamp, recipient, amount);
     }
+
+    // Tweak current bridged amount
+    _writeCurrentBridgedAmount(address(s_lockReleaseTokenPool), type(uint128).max);
 
     s_lockReleaseTokenPool.releaseOrMint(bytes(""), recipient, amount, SOURCE_CHAIN_SELECTOR, bytes(""));
   }
@@ -233,12 +251,17 @@ contract LockReleaseTokenPool_canAcceptLiquidity is LockReleaseTokenPoolSetup {
   function test_CanAcceptLiquiditySuccess() public {
     assertEq(true, s_lockReleaseTokenPool.canAcceptLiquidity());
 
-    s_lockReleaseTokenPool = new LockReleaseTokenPool(
-      s_token,
-      new address[](0),
-      address(s_mockARM),
-      false,
-      address(s_sourceRouter)
+    s_lockReleaseTokenPool = LockReleaseTokenPool(
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(s_token),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0),
+        acceptLiquidity: false
+      })
     );
     assertEq(false, s_lockReleaseTokenPool.canAcceptLiquidity());
   }
@@ -271,12 +294,17 @@ contract LockReleaseTokenPool_provideLiquidity is LockReleaseTokenPoolSetup {
   }
 
   function testLiquidityNotAcceptedReverts() public {
-    s_lockReleaseTokenPool = new LockReleaseTokenPool(
-      s_token,
-      new address[](0),
-      address(s_mockARM),
-      false,
-      address(s_sourceRouter)
+    s_lockReleaseTokenPool = LockReleaseTokenPool(
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(s_token),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0),
+        acceptLiquidity: false
+      })
     );
 
     vm.expectRevert(LockReleaseTokenPool.LiquidityNotAccepted.selector);

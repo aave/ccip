@@ -14,7 +14,16 @@ contract BurnMintTokenPoolSetup is BurnMintSetup {
   function setUp() public virtual override {
     BurnMintSetup.setUp();
 
-    s_pool = new BurnMintTokenPool(s_burnMintERC677, new address[](0), address(s_mockARM), address(s_sourceRouter));
+    s_pool = BurnMintTokenPool(
+      _deployUpgradeableBurnMintTokenPool({
+        ghoToken: address(s_burnMintERC677),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0)
+      })
+    );
     s_burnMintERC677.grantMintAndBurnRoles(address(s_pool));
 
     _applyChainUpdates(address(s_pool));

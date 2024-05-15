@@ -97,6 +97,10 @@ contract E2E is EVM2EVMOnRampSetup, CommitStoreSetup, EVM2EVMOffRampSetup {
 
     Internal.ExecutionReport memory execReport = _generateReportFromMessages(messages);
     vm.resumeGasMetering();
+
+    // Tweak current bridged amount on destination
+    _writeCurrentBridgedAmount(address(s_destPools[0]), type(uint128).max);
+
     s_offRamp.execute(execReport, new uint256[](0));
   }
 

@@ -719,24 +719,30 @@ contract EVM2EVMOnRamp_getFeeSetup is EVM2EVMOnRampSetup {
     // Add additional pool addresses for test tokens to mark them as supported
     Internal.PoolUpdate[] memory newRamps = new Internal.PoolUpdate[](2);
     address wrappedNativePool = address(
-      new LockReleaseTokenPool(
-        IERC20(s_sourceRouter.getWrappedNative()),
-        new address[](0),
-        address(s_mockARM),
-        true,
-        address(s_sourceRouter)
-      )
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(s_sourceRouter.getWrappedNative()),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0),
+        acceptLiquidity: true
+      })
     );
     newRamps[0] = Internal.PoolUpdate({token: s_sourceRouter.getWrappedNative(), pool: wrappedNativePool});
 
     address customPool = address(
-      new LockReleaseTokenPool(
-        IERC20(CUSTOM_TOKEN),
-        new address[](0),
-        address(s_mockARM),
-        true,
-        address(s_sourceRouter)
-      )
+      _deployUpgradeableLockReleaseTokenPool({
+        ghoToken: address(CUSTOM_TOKEN),
+        arm: address(s_mockARM),
+        router: address(s_sourceRouter),
+        owner: OWNER,
+        bridgeLimit: BRIDGE_LIMIT,
+        proxyAdmin: PROXY_ADMIN,
+        allowlist: new address[](0),
+        acceptLiquidity: true
+      })
     );
     newRamps[1] = Internal.PoolUpdate({token: CUSTOM_TOKEN, pool: customPool});
     s_onRamp.applyPoolUpdates(new Internal.PoolUpdate[](0), newRamps);
