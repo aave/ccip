@@ -75,12 +75,4 @@ contract GHOTokenPoolRemoteSetup is RouterSetup {
     offRampUpdates[0] = Router.OffRamp({sourceChainSelector: DEST_CHAIN_SELECTOR, offRamp: s_burnMintOffRamp});
     s_sourceRouter.applyRampUpdates(onRampUpdates, new Router.OffRamp[](0), offRampUpdates);
   }
-
-  function _inflateFacilitatorLevel(address tokenPool, address ghoToken, uint256 amount) internal {
-    vm.stopPrank();
-    vm.startPrank(tokenPool);
-    BurnMintERC677(ghoToken).mint(address(0), amount);
-    vm.stopPrank();
-    vm.startPrank(OWNER);
-  }
 }

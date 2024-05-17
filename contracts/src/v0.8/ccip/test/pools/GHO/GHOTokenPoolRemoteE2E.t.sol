@@ -136,6 +136,7 @@ contract GHOTokenPoolRemoteE2E is E2E {
 
     // Mint some GHO to inflate UpgradeableBurnMintTokenPool facilitator level
     _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), 1000 * 1e18);
+    vm.startPrank(OWNER);
 
     // Lock some GHO on destination so it can be released later on
     dstGhoToken.transfer(address(dstGhoTokenPool), 1000 * 1e18);
@@ -232,6 +233,7 @@ contract GHOTokenPoolRemoteE2E is E2E {
 
     // Mint some GHO to inflate UpgradeableTokenPool facilitator level
     _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), 6000 * 1e18);
+    vm.startPrank(OWNER);
 
     // Lock some GHO on destination so it can be released later on
     dstGhoToken.transfer(address(dstGhoTokenPool), 6000 * 1e18);
@@ -355,6 +357,7 @@ contract GHOTokenPoolRemoteE2E is E2E {
 
     // Mint some GHO to inflate UpgradeableTokenPool facilitator level
     _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), rateLimiterConfig.capacity);
+    vm.startPrank(OWNER);
     sendRequestGho(1, rateLimiterConfig.capacity, false, false);
 
     // revert due to capacity exceed
@@ -365,6 +368,7 @@ contract GHOTokenPoolRemoteE2E is E2E {
 
     // won't revert due to refill
     _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), 100);
+    vm.startPrank(OWNER);
     sendRequestGho(2, 100, false, false);
   }
 
@@ -408,12 +412,5 @@ contract GHOTokenPoolRemoteE2E is E2E {
     vm.pauseGasMetering();
 
     return geEvent;
-  }
-
-  function _inflateFacilitatorLevel(address tokenPool, address ghoToken, uint256 amount) internal {
-    vm.stopPrank();
-    vm.prank(tokenPool);
-    IBurnMintERC20(ghoToken).mint(address(0), amount);
-    vm.startPrank(OWNER);
   }
 }

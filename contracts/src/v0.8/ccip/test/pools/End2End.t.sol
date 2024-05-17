@@ -6,9 +6,6 @@ import "../commitStore/CommitStore.t.sol";
 import "../onRamp/EVM2EVMOnRampSetup.t.sol";
 import "../offRamp/EVM2EVMOffRampSetup.t.sol";
 
-import {console} from "forge-std/console.sol";
-import {console2} from "forge-std/console2.sol";
-
 contract E2E is EVM2EVMOnRampSetup, CommitStoreSetup, EVM2EVMOffRampSetup {
   using Internal for Internal.EVM2EVMMessage;
 
