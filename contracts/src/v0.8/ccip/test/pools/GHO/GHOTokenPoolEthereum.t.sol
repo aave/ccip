@@ -584,7 +584,7 @@ contract GHOTokenPoolEthereum_setBridgeLimit is GHOTokenPoolEthereumSetup {
 
   // Reverts
 
-  function testSetRateLimitAdminReverts() public {
+  function testSetBridgeLimitAdminReverts() public {
     vm.startPrank(STRANGER);
 
     vm.expectRevert(abi.encodeWithSelector(LockReleaseTokenPool.Unauthorized.selector, STRANGER));
