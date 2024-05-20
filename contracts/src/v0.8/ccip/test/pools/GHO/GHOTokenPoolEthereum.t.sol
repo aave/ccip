@@ -408,7 +408,7 @@ contract GHOTokenPoolEthereum_setChainRateLimiterConfig is GHOTokenPoolEthereumS
     assertEq(bucket.lastUpdated, newTime);
   }
 
-  function testOnlyOwnerOrRateLimitAdminReverts() public {
+  function testOnlyOwnerOrRateLimitAdminSuccess() public {
     address rateLimiterAdmin = address(28973509103597907);
 
     changePrank(AAVE_DAO);
@@ -487,6 +487,17 @@ contract GHOTokenPoolEthereum_setBridgeLimit is GHOTokenPoolEthereumSetup {
     emit BridgeLimitUpdated(INITIAL_BRIDGE_LIMIT, newBridgeLimit);
 
     vm.startPrank(AAVE_DAO);
+    s_ghoTokenPool.setBridgeLimit(newBridgeLimit);
+
+    assertEq(newBridgeLimit, s_ghoTokenPool.getBridgeLimit());
+
+    // Bridge Limit Admin
+    address bridgeLimitAdmin = address(28973509103597907);
+    s_ghoTokenPool.setBridgeLimitAdmin(bridgeLimitAdmin);
+
+    vm.startPrank(bridgeLimitAdmin);
+    newBridgeLimit += 1;
+
     s_ghoTokenPool.setBridgeLimit(newBridgeLimit);
 
     assertEq(newBridgeLimit, s_ghoTokenPool.getBridgeLimit());
@@ -576,8 +587,29 @@ contract GHOTokenPoolEthereum_setBridgeLimit is GHOTokenPoolEthereumSetup {
   function testSetRateLimitAdminReverts() public {
     vm.startPrank(STRANGER);
 
-    vm.expectRevert("Only callable by owner");
+    vm.expectRevert(abi.encodeWithSelector(LockReleaseTokenPool.Unauthorized.selector, STRANGER));
     s_ghoTokenPool.setBridgeLimit(0);
+  }
+}
+
+contract GHOTokenPoolEthereum_setBridgeLimitAdmin is GHOTokenPoolEthereumSetup {
+  function testSetBridgeLimitAdminSuccess() public {
+    assertEq(address(0), s_ghoTokenPool.getBridgeLimitAdmin());
+
+    address bridgeLimitAdmin = address(28973509103597907);
+    changePrank(AAVE_DAO);
+    s_ghoTokenPool.setBridgeLimitAdmin(bridgeLimitAdmin);
+
+    assertEq(bridgeLimitAdmin, s_ghoTokenPool.getBridgeLimitAdmin());
+  }
+
+  // Reverts
+
+  function testSetBridgeLimitAdminReverts() public {
+    vm.startPrank(STRANGER);
+
+    vm.expectRevert("Only callable by owner");
+    s_ghoTokenPool.setBridgeLimitAdmin(STRANGER);
   }
 }
 
