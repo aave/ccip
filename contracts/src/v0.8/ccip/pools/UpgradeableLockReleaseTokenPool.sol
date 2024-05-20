@@ -57,6 +57,9 @@ contract UpgradeableLockReleaseTokenPool is
   /// @notice Amount of tokens bridged (transferred out)
   /// @dev Must always be equal to or below the bridge limit
   uint256 private s_currentBridged;
+  /// @notice The address of the bridge limit admin.
+  /// @dev Can be address(0) if none is configured.
+  address internal s_bridgeLimitAdmin;
 
   /// @dev Constructor
   /// @param token The bridgeable token that is managed by this pool.
@@ -180,11 +183,20 @@ contract UpgradeableLockReleaseTokenPool is
   }
 
   /// @notice Sets the bridge limit, the maximum amount of tokens that can be bridged out
+  /// @dev Only callable by the owner or the bridge limit admin.
   /// @param newBridgeLimit The new bridge limit
-  function setBridgeLimit(uint256 newBridgeLimit) external onlyOwner {
+  function setBridgeLimit(uint256 newBridgeLimit) external {
+    if (msg.sender != s_bridgeLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
     uint256 oldBridgeLimit = s_bridgeLimit;
     s_bridgeLimit = newBridgeLimit;
     emit BridgeLimitUpdated(oldBridgeLimit, newBridgeLimit);
+  }
+
+  /// @notice Sets the bridge limit admin address.
+  /// @dev Only callable by the owner.
+  /// @param bridgeLimitAdmin The new bridge limit admin address.
+  function setBridgeLimitAdmin(address bridgeLimitAdmin) external onlyOwner {
+    s_bridgeLimitAdmin = bridgeLimitAdmin;
   }
 
   /// @notice Gets the bridge limit
@@ -202,6 +214,11 @@ contract UpgradeableLockReleaseTokenPool is
   /// @notice Gets the rate limiter admin address.
   function getRateLimitAdmin() external view returns (address) {
     return s_rateLimitAdmin;
+  }
+
+  /// @notice Gets the bridge limiter admin address.
+  function getBridgeLimitAdmin() external view returns (address) {
+    return s_bridgeLimitAdmin;
   }
 
   /// @notice Checks if the pool can accept liquidity.
