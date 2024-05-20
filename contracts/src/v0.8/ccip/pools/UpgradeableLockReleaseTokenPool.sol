@@ -33,7 +33,7 @@ contract UpgradeableLockReleaseTokenPool is
   error Unauthorized(address caller);
 
   error BridgeLimitExceeded(uint256 bridgeLimit);
-  error InvalidAmountToBurn();
+  error NotEnoughBridgedAmount();
   event BridgeLimitUpdated(uint256 oldBridgeLimit, uint256 newBridgeLimit);
 
   string public constant override typeAndVersion = "LockReleaseTokenPool 1.4.0";
@@ -141,7 +141,7 @@ contract UpgradeableLockReleaseTokenPool is
     bytes memory
   ) external virtual override onlyOffRamp(remoteChainSelector) whenHealthy {
     // This should never occur. Amount should never exceed the current bridged amount
-    if (amount > s_currentBridged) revert InvalidAmountToBurn();
+    if (amount > s_currentBridged) revert NotEnoughBridgedAmount();
     // Reduce bridged amount because tokens are back to source chain
     s_currentBridged -= amount;
 

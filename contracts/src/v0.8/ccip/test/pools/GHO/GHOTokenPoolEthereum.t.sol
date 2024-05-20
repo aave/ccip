@@ -241,7 +241,7 @@ contract GHOTokenPoolEthereum_releaseOrMint is GHOTokenPoolEthereumSetup {
 
   function testBridgedAmountNoEnoughReverts() public {
     uint256 amount = 10;
-    vm.expectRevert(abi.encodeWithSelector(UpgradeableLockReleaseTokenPool.InvalidAmountToBurn.selector));
+    vm.expectRevert(abi.encodeWithSelector(UpgradeableLockReleaseTokenPool.NotEnoughBridgedAmount.selector));
     vm.startPrank(s_allowedOffRamp);
     s_ghoTokenPool.releaseOrMint(bytes(""), STRANGER, amount, SOURCE_CHAIN_SELECTOR, bytes(""));
   }
