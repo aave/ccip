@@ -41,7 +41,7 @@ jobs:
       - name: Verify rule ${{ matrix.rule }}
         run: |
           echo "key length" ${#CERTORAKEY}
-          certoraRun certora/steward/conf/${{ matrix.rule }}
+          certoraRun certora/confs/${{ matrix.rule }}
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
 
