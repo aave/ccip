@@ -1,20 +1,15 @@
 /*
     This is a Specification File for Smart Contract Verification with the Certora Prover.
-    This file is run with ???
+    Contract name: UpgradeableLockReleaseTokenPool
 */
 
-//using ATokenHarness as _aToken;
 using SimpleERC20 as erc20;
-
 
 methods {
   function getCurrentBridgedAmount() external returns (uint256) envfree;
   function getBridgeLimit() external returns (uint256) envfree;
-  //  function withdrawLiquidity(uint256) external envfree;
   function getRebalancer() external returns (address) envfree;
-  //  function getToken() external returns (address) envfree;
 }
-
 
 
 rule sanity {
@@ -26,6 +21,13 @@ rule sanity {
 }
 
 
+
+/* ==============================================================================
+   invariant: currentBridge_LEQ_bridgeLimit.
+   Description: The value of s_currentBridged is LEQ than the value of s_bridgeLimit.
+   Note: this may be violated if one calls to setBridgeLimit(newBridgeLimit) with 
+         newBridgeLimit < s_currentBridged.
+   ============================================================================*/
 invariant currentBridge_LEQ_bridgeLimit()
   getCurrentBridgedAmount() <= getBridgeLimit()
   filtered { f ->
@@ -38,6 +40,12 @@ invariant currentBridge_LEQ_bridgeLimit()
   }
 
 
+/* ==============================================================================
+   rule: withdrawLiquidity_correctness
+   description: The rule checks that:
+         - only the rebalancer can call to withdrawLiquidity
+         - the balance of the contract is as expected.
+   ============================================================================*/
 rule withdrawLiquidity_correctness(env e) {
   uint256 amount;
 
@@ -51,6 +59,12 @@ rule withdrawLiquidity_correctness(env e) {
 }
 
 
+/* ==============================================================================
+   rule: provideLiquidity_correctness
+   description: The rule checks that:
+         - only the rebalancer can call to provideLiquidity
+         - the balance of the contract is as expected.
+   ============================================================================*/
 rule provideLiquidity_correctness(env e) {
   uint256 amount;
 
