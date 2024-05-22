@@ -184,6 +184,7 @@ contract UpgradeableLockReleaseTokenPool is
 
   /// @notice Sets the bridge limit, the maximum amount of tokens that can be bridged out
   /// @dev Only callable by the owner or the bridge limit admin.
+  /// @dev Bridge limit changes should be carefully managed, specially when reducing below the current bridged amount
   /// @param newBridgeLimit The new bridge limit
   function setBridgeLimit(uint256 newBridgeLimit) external {
     if (msg.sender != s_bridgeLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
