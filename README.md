@@ -1,4 +1,4 @@
-> Forked repository of CCIP contracts ([version 2.8.0 release](https://github.com/smartcontractkit/ccip/tree/v2.8.0-ccip1.4.0-release)) includes modifications for developing custom TokenPool contracts tailored for the GHO cross-chain strategy. All relevant code and tests are located in the [GHO pools directory](./contracts/v0.8/ccip/pools/GHO).
+> ❗️ Forked repository of CCIP contracts ([version 2.8.0 release](https://github.com/smartcontractkit/ccip/tree/v2.8.0-ccip1.4.0-release)) that includes modifications for developing custom TokenPool contracts tailored for the [GHO cross-chain strategy](https://governance.aave.com/t/arfc-gho-cross-chain-launch/17616). All relevant code and tests are located in the [GHO pools directory](./contracts/v0.8/ccip/pools/GHO).
 
 <br/>
 <p align="center">
