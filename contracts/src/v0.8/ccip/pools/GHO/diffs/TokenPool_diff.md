@@ -7,7 +7,7 @@ index b3571bb449..fcd8948098 100644
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
- 
+
  import {IPool} from "../interfaces/pools/IPool.sol";
  import {IARM} from "../interfaces/IARM.sol";
 @@ -15,7 +15,7 @@ import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts
@@ -30,7 +30,7 @@ index b3571bb449..fcd8948098 100644
    /// degrees and prefer different limits)
 -  mapping(uint64 remoteChainSelector => RateLimiter.TokenBucket) internal s_inboundRateLimits;
 +  mapping(uint64 => RateLimiter.TokenBucket) internal s_inboundRateLimits;
- 
+
 -  constructor(IERC20 token, address[] memory allowlist, address armProxy, address router) {
 -    if (address(token) == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
 +  constructor(IERC20 token, address armProxy, bool allowlistEnabled) {
@@ -46,6 +46,6 @@ index b3571bb449..fcd8948098 100644
 -    }
 +    i_allowlistEnabled = allowlistEnabled;
    }
- 
+
    /// @notice Get ARM proxy address
 ```

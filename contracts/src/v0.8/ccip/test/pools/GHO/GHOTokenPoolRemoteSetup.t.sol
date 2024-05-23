@@ -5,10 +5,10 @@ import {GhoToken} from "@aave/gho-core/gho/GhoToken.sol";
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
 
 import {stdError} from "forge-std/Test.sol";
-import {UpgradeableTokenPool} from "../../../pools/UpgradeableTokenPool.sol";
+import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {Router} from "../../../Router.sol";
 import {BurnMintERC677} from "../../../../shared/token/ERC677/BurnMintERC677.sol";
-import {UpgradeableBurnMintTokenPool} from "../../../pools/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {RouterSetup} from "../../router/RouterSetup.t.sol";
 
 contract GHOTokenPoolRemoteSetup is RouterSetup {

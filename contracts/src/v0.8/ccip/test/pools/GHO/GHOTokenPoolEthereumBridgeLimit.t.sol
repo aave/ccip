@@ -746,10 +746,8 @@ contract GHOTokenPoolEthereumBridgeLimitTripleScenario is GHOTokenPoolEthereumBr
 
   /// @dev All remote liquidity is on one chain or the other
   function testLiquidityUnbalanced() public {
-    uint256 amount;
-
     // Bridge all out to Arbitrum
-    amount = _getMaxToBridgeOut(0);
+    uint256 amount = _getMaxToBridgeOut(0);
     deal(tokens[0], USER, amount);
     _bridgeGho(0, 1, USER, amount);
 
@@ -809,5 +807,42 @@ contract GHOTokenPoolEthereumBridgeLimitTripleScenario is GHOTokenPoolEthereumBr
     // Only if bucket capacity gets increased, execution can succeed
     _updateBucketCapacity(1, 10);
     _moveGhoDestination(0, 1, USER, 10);
+  }
+
+  /// @dev Test showcasing a user locked due to a bridge limit reduction below current bridged amount
+  function testUserLockedBridgeLimitReductionBelowLevel() public {
+    // Bridge all out to Arbitrum
+    uint256 amount = _getMaxToBridgeOut(0);
+    deal(tokens[0], USER, amount);
+    _bridgeGho(0, 1, USER, amount);
+
+    // Reduce bridge limit below current bridged amount
+    uint256 newBridgeLimit = amount / 2;
+    _updateBridgeLimit(newBridgeLimit);
+    _updateBucketCapacity(1, newBridgeLimit);
+    // _updateBucketCapacity(2, newBridgeLimit);
+
+    // assertEq(_getMaxToBridgeIn(2), newBridgeLimit);
+
+    // Reverts
+    _bridgeGho(1, 2, USER, amount);
+  }
+
+  /// @dev Test showcasing a user locked due to a bridge limit reduction below current bridged amount
+  function testUserLockedBridgeLimitReductionBelowLevel2() public {
+    // Bridge all out to Arbitrum
+    uint256 amount = _getMaxToBridgeOut(0);
+    deal(tokens[0], USER, amount);
+    _bridgeGho(0, 1, USER, amount);
+
+    // Reduce bridge limit below current bridged amount
+    uint256 newBridgeLimit = amount / 2;
+    _updateBridgeLimit(newBridgeLimit);
+    _updateBucketCapacity(2, newBridgeLimit);
+
+    // assertEq(_getMaxToBridgeIn(2), newBridgeLimit);
+
+    // Reverts
+    _bridgeGho(1, 2, USER, amount);
   }
 }

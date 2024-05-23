@@ -7,8 +7,8 @@ import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-
 import {stdError} from "forge-std/Test.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
 import {IPool} from "../../../interfaces/pools/IPool.sol";
-import {UpgradeableLockReleaseTokenPool} from "../../../pools/UpgradeableLockReleaseTokenPool.sol";
-import {UpgradeableTokenPool} from "../../../pools/UpgradeableTokenPool.sol";
+import {UpgradeableLockReleaseTokenPool} from "../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
+import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {EVM2EVMOnRamp} from "../../../onRamp/EVM2EVMOnRamp.sol";
 import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";

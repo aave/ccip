@@ -2,12 +2,15 @@
 pragma solidity 0.8.19;
 
 import {Test, stdError} from "forge-std/Test.sol";
+import {StdInvariant} from "forge-std/StdInvariant.sol";
+import {StdCheats} from "forge-std/StdCheats.sol";
+import {StdUtils} from "forge-std/StdUtils.sol";
 import {MockARM} from "./mocks/MockARM.sol";
 import {StructFactory} from "./StructFactory.sol";
 
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
-import {UpgradeableLockReleaseTokenPool} from "../pools/UpgradeableLockReleaseTokenPool.sol";
-import {UpgradeableBurnMintTokenPool} from "../pools/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableLockReleaseTokenPool} from "../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
+import {UpgradeableBurnMintTokenPool} from "../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
 
 contract BaseTest is Test, StructFactory {

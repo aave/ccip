@@ -7,15 +7,15 @@ index 9af0f22f4c..f07f8c3a28 100644
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
- 
+
  import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
  import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
- 
+
 -import {TokenPool} from "./TokenPool.sol";
 -import {BurnMintTokenPoolAbstract} from "./BurnMintTokenPoolAbstract.sol";
 +import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 +import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
- 
+
 -/// @notice This pool mints and burns a 3rd-party token.
 -/// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
 -/// It either accepts any address as originalSender, or only accepts whitelisted originalSender.
@@ -33,7 +33,7 @@ index 9af0f22f4c..f07f8c3a28 100644
 +/// - Move of allowlist and router definition to initialization stage
 +contract UpgradeableBurnMintTokenPool is VersionedInitializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
    string public constant override typeAndVersion = "BurnMintTokenPool 1.4.0";
- 
+
 +  /// @dev Constructor
 +  /// @param token The bridgeable token that is managed by this pool.
 +  /// @param armProxy The address of the arm proxy
@@ -47,7 +47,7 @@ index 9af0f22f4c..f07f8c3a28 100644
 -  ) TokenPool(token, allowlist, armProxy, router) {}
 +    bool allowlistEnabled
 +  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
- 
+
 -  /// @inheritdoc BurnMintTokenPoolAbstract
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.
