@@ -3,15 +3,17 @@ pragma solidity 0.8.19;
 
 import {GhoToken} from "@aave/gho-core/gho/GhoToken.sol";
 
-import {BaseTest} from "../../BaseTest.t.sol";
 import {IPool} from "../../../interfaces/pools/IPool.sol";
 import {UpgradeableLockReleaseTokenPool} from "../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
-import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 
+import {StdInvariant} from "forge-std/StdInvariant.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+
 import {console2} from "forge-std/console2.sol";
-contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
+
+contract GHOTokenPoolHandler is BaseTest {
   address internal ARM_PROXY = makeAddr("ARM_PROXY");
   address internal ROUTER = makeAddr("ROUTER");
   address internal RAMP = makeAddr("RAMP");
@@ -29,9 +31,9 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
   mapping(uint256 => uint256) public liquidity; // chainId => liquidity
   uint256 public remoteLiquidity;
   uint256 public bridged;
+  bool public capacityBelowLevelUpdate;
 
-  function setUp() public virtual override {
-    console2.log("ENTRA");
+  constructor() {
     // Ethereum with id 0
     chainsList.push(0);
     tokens[0] = address(new GhoToken(AAVE_DAO));
@@ -48,6 +50,72 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
     vm.mockCall(ROUTER, abi.encodeWithSelector(bytes4(keccak256("getOnRamp(uint64)"))), abi.encode(RAMP));
     vm.mockCall(ROUTER, abi.encodeWithSelector(bytes4(keccak256("isOffRamp(uint64,address)"))), abi.encode(true));
     vm.mockCall(ARM_PROXY, abi.encodeWithSelector(bytes4(keccak256("isCursed()"))), abi.encode(false));
+
+    // Arbitrum
+    _addBridge(1, INITIAL_BRIDGE_LIMIT);
+    _enableLane(0, 1);
+
+    // Avalanche
+    _addBridge(2, INITIAL_BRIDGE_LIMIT);
+    _enableLane(0, 2);
+    _enableLane(1, 2);
+  }
+
+  /// forge-config: ccip.fuzz.runs = 500
+  function bridgeGho(uint256 fromChain, uint256 toChain, uint256 amount) public {
+    fromChain = bound(fromChain, 0, 2);
+    toChain = bound(toChain, 0, 2);
+    vm.assume(fromChain != toChain);
+    uint256 maxBalance = GhoToken(tokens[fromChain]).balanceOf(address(this));
+    uint256 maxToBridge = _getMaxToBridgeOut(fromChain);
+    uint256 maxAmount = maxBalance > maxToBridge ? maxToBridge : maxBalance;
+    amount = bound(amount, 0, maxAmount);
+
+    console2.log("bridgeGho", fromChain, toChain, amount);
+    console2.log("bridgeLimit", UpgradeableLockReleaseTokenPool(pools[0]).getBridgeLimit());
+    console2.log("currentBridged", UpgradeableLockReleaseTokenPool(pools[0]).getBridgeLimit());
+    if (!_isEthereumChain(fromChain)) {
+      console2.log("bucket from", fromChain, _getCapacity(fromChain), _getLevel(fromChain));
+    }
+    if (!_isEthereumChain(toChain)) {
+      console2.log("bucket to", toChain, _getCapacity(toChain), _getLevel(toChain));
+    }
+
+    if (amount > 0) {
+      _bridgeGho(fromChain, toChain, address(this), amount);
+    }
+  }
+
+  /// forge-config: ccip.fuzz.runs = 500
+  function updateBucketCapacity(uint256 chain, uint128 newCapacity) public {
+    chain = bound(chain, 1, 2);
+    uint256 otherChain = (chain % 2) + 1;
+    vm.assume(newCapacity >= bridged);
+
+    uint256 oldCapacity = bucketCapacities[chain];
+
+    console2.log("updateBucketCapacity", chain, oldCapacity, newCapacity);
+    if (newCapacity < bucketLevels[chain]) {
+      capacityBelowLevelUpdate = true;
+    } else {
+      capacityBelowLevelUpdate = false;
+    }
+
+    if (newCapacity > oldCapacity) {
+      // Increase
+      _updateBucketCapacity(chain, newCapacity);
+      // keep bridge limit as the minimum bucket capacity
+      if (newCapacity < bucketCapacities[otherChain]) {
+        _updateBridgeLimit(newCapacity);
+      }
+    } else {
+      // Reduction
+      // keep bridge limit as the minimum bucket capacity
+      if (newCapacity < bucketCapacities[otherChain]) {
+        _updateBridgeLimit(newCapacity);
+      }
+      _updateBucketCapacity(chain, newCapacity);
+    }
   }
 
   function _enableLane(uint256 fromId, uint256 toId) internal {
@@ -99,38 +167,19 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
   }
 
   function _updateBridgeLimit(uint256 newBridgeLimit) internal {
-    vm.prank(OWNER);
+    vm.stopPrank();
+    vm.startPrank(OWNER);
     UpgradeableLockReleaseTokenPool(pools[0]).setBridgeLimit(newBridgeLimit);
+    vm.stopPrank();
   }
 
   function _updateBucketCapacity(uint256 chainId, uint256 newBucketCapacity) internal {
     bucketCapacities[chainId] = newBucketCapacity;
+    vm.stopPrank();
     vm.startPrank(AAVE_DAO);
     GhoToken(tokens[chainId]).grantRole(GhoToken(tokens[chainId]).BUCKET_MANAGER_ROLE(), AAVE_DAO);
     GhoToken(tokens[chainId]).setFacilitatorBucketCapacity(pools[chainId], uint128(newBucketCapacity));
     vm.stopPrank();
-  }
-
-  function _getMaxToBridgeOut(uint256 fromChain) internal view returns (uint256) {
-    if (_isEthereumChain(fromChain)) {
-      UpgradeableLockReleaseTokenPool ethTokenPool = UpgradeableLockReleaseTokenPool(pools[0]);
-      uint256 bridgeLimit = ethTokenPool.getBridgeLimit();
-      uint256 currentBridged = ethTokenPool.getCurrentBridgedAmount();
-      return currentBridged > bridgeLimit ? 0 : bridgeLimit - currentBridged;
-    } else {
-      (, uint256 level) = GhoToken(tokens[fromChain]).getFacilitatorBucket(pools[fromChain]);
-      return level;
-    }
-  }
-
-  function _getMaxToBridgeIn(uint256 toChain) internal view returns (uint256) {
-    if (_isEthereumChain(toChain)) {
-      UpgradeableLockReleaseTokenPool ethTokenPool = UpgradeableLockReleaseTokenPool(pools[0]);
-      return ethTokenPool.getCurrentBridgedAmount();
-    } else {
-      (uint256 capacity, uint256 level) = GhoToken(tokens[toChain]).getFacilitatorBucket(pools[toChain]);
-      return level > capacity ? 0 : capacity - level;
-    }
   }
 
   function _getCapacity(uint256 chain) internal view returns (uint256) {
@@ -145,6 +194,18 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
     return level;
   }
 
+  function _getMaxToBridgeOut(uint256 fromChain) internal view returns (uint256) {
+    if (_isEthereumChain(fromChain)) {
+      UpgradeableLockReleaseTokenPool ethTokenPool = UpgradeableLockReleaseTokenPool(pools[0]);
+      uint256 bridgeLimit = ethTokenPool.getBridgeLimit();
+      uint256 currentBridged = ethTokenPool.getCurrentBridgedAmount();
+      return currentBridged > bridgeLimit ? 0 : bridgeLimit - currentBridged;
+    } else {
+      (, uint256 level) = GhoToken(tokens[fromChain]).getFacilitatorBucket(pools[fromChain]);
+      return level;
+    }
+  }
+
   function _bridgeGho(uint256 fromChain, uint256 toChain, address user, uint256 amount) internal {
     _moveGhoOrigin(fromChain, toChain, user, amount);
     _moveGhoDestination(fromChain, toChain, user, amount);
@@ -152,10 +213,10 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
 
   function _moveGhoOrigin(uint256 fromChain, uint256 toChain, address user, uint256 amount) internal {
     // Simulate CCIP pull of funds
-    vm.prank(user);
+    vm.startPrank(user);
     GhoToken(tokens[fromChain]).transfer(pools[fromChain], amount);
 
-    vm.prank(RAMP);
+    vm.startPrank(RAMP);
     IPool(pools[fromChain]).lockOrBurn(user, bytes(""), amount, uint64(toChain), bytes(""));
 
     if (_isEthereumChain(fromChain)) {
@@ -170,7 +231,7 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
   }
 
   function _moveGhoDestination(uint256 fromChain, uint256 toChain, address user, uint256 amount) internal {
-    vm.prank(RAMP);
+    vm.startPrank(RAMP);
     IPool(pools[toChain]).releaseOrMint(bytes(""), user, amount, uint64(fromChain), bytes(""));
 
     if (_isEthereumChain(toChain)) {
@@ -188,39 +249,65 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
     return chainId == 0;
   }
 
-  function _assertInvariant() internal {
+  function getChainsList() public view returns (uint256[] memory) {
+    return chainsList;
+  }
+}
+
+contract GHOTokenPoolEthereumBridgeLimitInvariant is BaseTest {
+  GHOTokenPoolHandler handler;
+
+  function setUp() public override {
+    super.setUp();
+
+    handler = new GHOTokenPoolHandler();
+    handler.getChainsList();
+    deal(handler.tokens(0), address(handler), handler.INITIAL_BRIDGE_LIMIT());
+
+    targetContract(address(handler));
+  }
+
+  /// forge-config: ccip.invariant.fail-on-revert = true
+  /// forge-config: ccip.invariant.runs = 2000
+  /// forge-config: ccip.invariant.depth = 50
+  function invariant_bridgeLimit() public {
     // Check bridged
-    assertEq(UpgradeableLockReleaseTokenPool(pools[0]).getCurrentBridgedAmount(), bridged);
+    assertEq(UpgradeableLockReleaseTokenPool(handler.pools(0)).getCurrentBridgedAmount(), handler.bridged());
 
     // Check levels and buckets
     uint256 sumLevels;
     uint256 chainId;
     uint256 capacity;
     uint256 level;
-    for (uint i = 1; i < chainsList.length; i++) {
+    uint256[] memory chainsListLocal = handler.getChainsList();
+    for (uint i = 1; i < chainsListLocal.length; i++) {
       // not counting Ethereum -{0}
-      chainId = chainsList[i];
-      (capacity, level) = GhoToken(tokens[chainId]).getFacilitatorBucket(pools[chainId]);
+      chainId = chainsListLocal[i];
+      (capacity, level) = GhoToken(handler.tokens(chainId)).getFacilitatorBucket(handler.pools(chainId));
 
       // Aggregate levels
       sumLevels += level;
 
-      assertEq(capacity, bucketCapacities[chainId], "wrong bucket capacity");
-      assertEq(level, bucketLevels[chainId], "wrong bucket level");
+      assertEq(capacity, handler.bucketCapacities(chainId), "wrong bucket capacity");
+      assertEq(level, handler.bucketLevels(chainId), "wrong bucket level");
 
-      assertEq(
+      assertGe(
         capacity,
-        UpgradeableLockReleaseTokenPool(pools[0]).getBridgeLimit(),
+        UpgradeableLockReleaseTokenPool(handler.pools(0)).getBridgeLimit(),
         "capacity must be equal to bridgeLimit"
       );
-      assertLe(
-        level,
-        UpgradeableLockReleaseTokenPool(pools[0]).getBridgeLimit(),
-        "level cannot be higher than bridgeLimit"
-      );
+
+      // This invariant only holds if there were no bridge limit reductions below the current bridged amount
+      if (!handler.capacityBelowLevelUpdate()) {
+        assertLe(
+          level,
+          UpgradeableLockReleaseTokenPool(handler.pools(0)).getBridgeLimit(),
+          "level cannot be higher than bridgeLimit"
+        );
+      }
     }
     // Check bridged is equal to sum of levels
-    assertEq(UpgradeableLockReleaseTokenPool(pools[0]).getCurrentBridgedAmount(), sumLevels, "wrong bridged");
-    assertEq(remoteLiquidity, sumLevels, "wrong bridged");
+    assertEq(UpgradeableLockReleaseTokenPool(handler.pools(0)).getCurrentBridgedAmount(), sumLevels, "wrong bridged");
+    assertEq(handler.remoteLiquidity(), sumLevels, "wrong bridged");
   }
 }

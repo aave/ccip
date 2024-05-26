@@ -1,3 +1,5 @@
+> ❗️ Forked repository of CCIP contracts ([version 2.8.0 release](https://github.com/smartcontractkit/ccip/tree/v2.8.0-ccip1.4.0-release)) that includes modifications for developing custom TokenPool contracts tailored for the [GHO cross-chain strategy](https://governance.aave.com/t/arfc-gho-cross-chain-launch/17616). All relevant code and tests are located in the [GHO pools directory](./contracts/v0.8/ccip/pools/GHO).
+
 <br/>
 <p align="center">
 <a href="https://chain.link" target="_blank">
@@ -232,9 +234,11 @@ flowchart RL
     github.com/smartcontractkit/chainlink/core/scripts --> github.com/smartcontractkit/chainlink/v2
 
 ```
+
 The `integration-tests` and `core/scripts` modules import the root module using a relative replace in their `go.mod` files,
 so dependency changes in the root `go.mod` often require changes in those modules as well. After making a change, `go mod tidy`
 can be run on all three modules using:
+
 ```
 make gomodtidy
 ```
@@ -254,6 +258,7 @@ pnpm i
 ```bash
 pnpm test
 ```
+
 NOTE: Chainlink is currently in the process of migrating to Foundry and contains both Foundry and Hardhat tests in some versions. More information can be found here: [Chainlink Foundry Documentation](https://github.com/smartcontractkit/chainlink/blob/develop/contracts/foundry.md).
 Any 't.sol' files associated with Foundry tests, contained within the src directories will be ignored by Hardhat.
 

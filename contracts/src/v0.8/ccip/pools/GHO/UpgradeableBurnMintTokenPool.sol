@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
-import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
+import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
+import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
 import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
 
-import {IRouter} from "../interfaces/IRouter.sol";
+import {IRouter} from "../../interfaces/IRouter.sol";
 import {VersionedInitializable} from "./VersionedInitializable.sol";
 
 /// @title UpgradeableBurnMintTokenPool

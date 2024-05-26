@@ -6,11 +6,11 @@ import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-
 
 import {stdError} from "forge-std/Test.sol";
 import {MockUpgradeable} from "../../mocks/MockUpgradeable.sol";
-import {UpgradeableTokenPool} from "../../../pools/UpgradeableTokenPool.sol";
+import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {EVM2EVMOnRamp} from "../../../onRamp/EVM2EVMOnRamp.sol";
 import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {BurnMintTokenPool} from "../../../pools/BurnMintTokenPool.sol";
-import {UpgradeableBurnMintTokenPool} from "../../../pools/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {GHOTokenPoolRemoteSetup} from "./GHOTokenPoolRemoteSetup.t.sol";
 

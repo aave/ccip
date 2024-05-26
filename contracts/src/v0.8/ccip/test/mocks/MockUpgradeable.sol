@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {VersionedInitializable} from "../../pools/VersionedInitializable.sol";
+import {VersionedInitializable} from "../../pools/GHO/VersionedInitializable.sol";
 
 /**
  * @dev Mock contract to test upgrades, not to be used in production.
