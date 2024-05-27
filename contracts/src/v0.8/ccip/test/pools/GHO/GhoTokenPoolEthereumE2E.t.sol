@@ -16,15 +16,15 @@ import {IPool} from "../../../interfaces/pools/IPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
 import {E2E} from "../End2End.t.sol";
-import {GHOBaseTest} from "./GHOBaseTest.t.sol";
+import {GhoBaseTest} from "./GhoBaseTest.t.sol";
 
-contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
+contract GhoTokenPoolEthereumE2E is E2E, GhoBaseTest {
   using Internal for Internal.EVM2EVMMessage;
 
   IBurnMintERC20 internal srcGhoToken;
   IBurnMintERC20 internal dstGhoToken;
-  UpgradeableBurnMintTokenPool internal srcGhoTokenPool;
-  UpgradeableLockReleaseTokenPool internal dstGhoTokenPool;
+  UpgradeableLockReleaseTokenPool internal srcGhoTokenPool;
+  UpgradeableBurnMintTokenPool internal dstGhoTokenPool;
 
   function setUp() public virtual override(E2E, BaseTest) {
     E2E.setUp();
@@ -41,13 +41,14 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     // Add GHO token to destination token list
     s_destTokens.push(address(dstGhoToken));
 
-    // Deploy BurnMintTokenPool for GHO token on source chain
-    srcGhoTokenPool = UpgradeableBurnMintTokenPool(
-      _deployUpgradeableBurnMintTokenPool(
+    // Deploy LockReleaseTokenPool for GHO token on source chain
+    srcGhoTokenPool = UpgradeableLockReleaseTokenPool(
+      _deployUpgradeableLockReleaseTokenPool(
         address(srcGhoToken),
         address(s_mockARM),
         address(s_sourceRouter),
         AAVE_DAO,
+        INITIAL_BRIDGE_LIMIT,
         PROXY_ADMIN
       )
     );
@@ -55,14 +56,13 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     // Add GHO UpgradeableTokenPool to source token pool list
     s_sourcePools.push(address(srcGhoTokenPool));
 
-    // Deploy LockReleaseTokenPool for GHO token on destination chain
-    dstGhoTokenPool = UpgradeableLockReleaseTokenPool(
-      _deployUpgradeableLockReleaseTokenPool(
+    // Deploy BurnMintTokenPool for GHO token on destination chain
+    dstGhoTokenPool = UpgradeableBurnMintTokenPool(
+      _deployUpgradeableBurnMintTokenPool(
         address(dstGhoToken),
         address(s_mockARM),
         address(s_destRouter),
         AAVE_DAO,
-        INITIAL_BRIDGE_LIMIT,
         PROXY_ADMIN
       )
     );
@@ -70,11 +70,11 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     // Add GHO UpgradeableTokenPool to destination token pool list
     s_destPools.push(address(dstGhoTokenPool));
 
-    // Give mint and burn privileges to source UpgradeableTokenPool (GHO-specific related)
+    // Give mint and burn privileges to destination UpgradeableTokenPool (GHO-specific related)
     vm.stopPrank();
     vm.startPrank(AAVE_DAO);
-    GhoToken(address(srcGhoToken)).grantRole(GhoToken(address(srcGhoToken)).FACILITATOR_MANAGER_ROLE(), AAVE_DAO);
-    GhoToken(address(srcGhoToken)).addFacilitator(address(srcGhoTokenPool), "UpgradeableTokenPool", type(uint128).max);
+    GhoToken(address(dstGhoToken)).grantRole(GhoToken(address(dstGhoToken)).FACILITATOR_MANAGER_ROLE(), AAVE_DAO);
+    GhoToken(address(dstGhoToken)).addFacilitator(address(dstGhoTokenPool), "UpgradeableTokenPool", type(uint128).max);
     vm.stopPrank();
     vm.startPrank(OWNER);
 
@@ -121,38 +121,14 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     IPool[] memory dstPools = new IPool[](1);
     dstPools[0] = IPool(address(dstGhoTokenPool));
     s_offRamp.applyPoolUpdates(new Internal.PoolUpdate[](0), getTokensAndPools(srcTokens, dstPools));
-
-    address[] memory dstTokens = new address[](1);
-    dstTokens[0] = address(dstGhoToken);
-    s_onRamp.applyPoolUpdates(new Internal.PoolUpdate[](0), getTokensAndPools(dstTokens, dstPools));
   }
 
   function testE2E_MessagesSuccess_gas() public {
     vm.pauseGasMetering();
-
-    // Mint some GHO to inflate UpgradeableBurnMintTokenPool facilitator level
-    _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), 1000 * 1e18);
-    vm.startPrank(OWNER);
-
-    // Lock some GHO on destination so it can be released later on
-    dstGhoToken.transfer(address(dstGhoTokenPool), 1000 * 1e18);
-    // Inflate current bridged amount so it can be reduced in `releaseOrMint` function
-    vm.stopPrank();
-    vm.startPrank(address(s_onRamp));
-    vm.mockCall(
-      address(s_destRouter),
-      abi.encodeWithSelector(bytes4(keccak256("getOnRamp(uint64)"))),
-      abi.encode(s_onRamp)
-    );
-    dstGhoTokenPool.lockOrBurn(STRANGER, bytes(""), 1000 * 1e18, SOURCE_CHAIN_SELECTOR, bytes(""));
-    assertEq(dstGhoTokenPool.getCurrentBridgedAmount(), 1000 * 1e18);
-    vm.startPrank(address(OWNER));
-
     uint256 preGhoTokenBalanceOwner = srcGhoToken.balanceOf(OWNER);
     uint256 preGhoTokenBalancePool = srcGhoToken.balanceOf(address(srcGhoTokenPool));
-    (uint256 preCapacity, uint256 preLevel) = GhoToken(address(srcGhoToken)).getFacilitatorBucket(
-      address(srcGhoTokenPool)
-    );
+    uint256 preBridgedAmount = srcGhoTokenPool.getCurrentBridgedAmount();
+    uint256 preBridgeLimit = srcGhoTokenPool.getBridgeLimit();
 
     Internal.EVM2EVMMessage[] memory messages = new Internal.EVM2EVMMessage[](1);
     messages[0] = sendRequestGho(1, 1000 * 1e18, false, false);
@@ -160,16 +136,11 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     uint256 expectedFee = s_sourceRouter.getFee(DEST_CHAIN_SELECTOR, _generateTokenMessage());
     // Asserts that the tokens have been sent and the fee has been paid.
     assertEq(preGhoTokenBalanceOwner - 1000 * 1e18, srcGhoToken.balanceOf(OWNER));
-    assertEq(preGhoTokenBalancePool, srcGhoToken.balanceOf(address(srcGhoTokenPool))); // GHO gets burned
+    assertEq(preGhoTokenBalancePool + 1000 * 1e18, srcGhoToken.balanceOf(address(srcGhoTokenPool)));
     assertGt(expectedFee, 0);
-    assertEq(dstGhoTokenPool.getCurrentBridgedAmount(), 1000 * 1e18);
 
-    // Facilitator checks
-    (uint256 postCapacity, uint256 postLevel) = GhoToken(address(srcGhoToken)).getFacilitatorBucket(
-      address(srcGhoTokenPool)
-    );
-    assertEq(postCapacity, preCapacity);
-    assertEq(preLevel - 1000 * 1e18, postLevel, "wrong facilitator bucket level");
+    assertEq(preBridgedAmount + 1000 * 1e18, srcGhoTokenPool.getCurrentBridgedAmount());
+    assertEq(preBridgeLimit, srcGhoTokenPool.getBridgeLimit());
 
     bytes32 metaDataHash = s_offRamp.metadataHash();
 
@@ -215,41 +186,29 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     Internal.ExecutionReport memory execReport = _generateReportFromMessages(messages);
 
     uint256 preGhoTokenBalanceUser = dstGhoToken.balanceOf(USER);
+    (uint256 preCapacity, uint256 preLevel) = GhoToken(address(dstGhoToken)).getFacilitatorBucket(
+      address(dstGhoTokenPool)
+    );
 
     vm.resumeGasMetering();
     s_offRamp.execute(execReport, new uint256[](0));
     vm.pauseGasMetering();
 
     assertEq(preGhoTokenBalanceUser + 1000 * 1e18, dstGhoToken.balanceOf(USER), "Wrong balance on destination");
-    assertEq(dstGhoTokenPool.getCurrentBridgedAmount(), 0);
+    // Facilitator checks
+    (uint256 postCapacity, uint256 postLevel) = GhoToken(address(dstGhoToken)).getFacilitatorBucket(
+      address(dstGhoTokenPool)
+    );
+    assertEq(postCapacity, preCapacity);
+    assertEq(preLevel + 1000 * 1e18, postLevel, "wrong facilitator bucket level");
   }
 
   function testE2E_3MessagesSuccess_gas() public {
     vm.pauseGasMetering();
-
-    // Mint some GHO to inflate UpgradeableTokenPool facilitator level
-    _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), 6000 * 1e18);
-    vm.startPrank(OWNER);
-
-    // Lock some GHO on destination so it can be released later on
-    dstGhoToken.transfer(address(dstGhoTokenPool), 6000 * 1e18);
-    // Inflate current bridged amount so it can be reduced in `releaseOrMint` function
-    vm.stopPrank();
-    vm.startPrank(address(s_onRamp));
-    vm.mockCall(
-      address(s_destRouter),
-      abi.encodeWithSelector(bytes4(keccak256("getOnRamp(uint64)"))),
-      abi.encode(s_onRamp)
-    );
-    dstGhoTokenPool.lockOrBurn(STRANGER, bytes(""), 6000 * 1e18, SOURCE_CHAIN_SELECTOR, bytes(""));
-    assertEq(dstGhoTokenPool.getCurrentBridgedAmount(), 6000 * 1e18);
-    vm.startPrank(address(OWNER));
-
     uint256 preGhoTokenBalanceOwner = srcGhoToken.balanceOf(OWNER);
     uint256 preGhoTokenBalancePool = srcGhoToken.balanceOf(address(srcGhoTokenPool));
-    (uint256 preCapacity, uint256 preLevel) = GhoToken(address(srcGhoToken)).getFacilitatorBucket(
-      address(srcGhoTokenPool)
-    );
+    uint256 preBridgedAmount = srcGhoTokenPool.getCurrentBridgedAmount();
+    uint256 preBridgeLimit = srcGhoTokenPool.getBridgeLimit();
 
     Internal.EVM2EVMMessage[] memory messages = new Internal.EVM2EVMMessage[](3);
     messages[0] = sendRequestGho(1, 1000 * 1e18, false, false);
@@ -259,16 +218,11 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     uint256 expectedFee = s_sourceRouter.getFee(DEST_CHAIN_SELECTOR, _generateTokenMessage());
     // Asserts that the tokens have been sent and the fee has been paid.
     assertEq(preGhoTokenBalanceOwner - 6000 * 1e18, srcGhoToken.balanceOf(OWNER));
-    assertEq(preGhoTokenBalancePool, srcGhoToken.balanceOf(address(srcGhoTokenPool))); // GHO gets burned
+    assertEq(preGhoTokenBalancePool + 6000 * 1e18, srcGhoToken.balanceOf(address(srcGhoTokenPool)));
     assertGt(expectedFee, 0);
-    assertEq(dstGhoTokenPool.getCurrentBridgedAmount(), 6000 * 1e18);
 
-    // Facilitator checks
-    (uint256 postCapacity, uint256 postLevel) = GhoToken(address(srcGhoToken)).getFacilitatorBucket(
-      address(srcGhoTokenPool)
-    );
-    assertEq(postCapacity, preCapacity);
-    assertEq(preLevel - 6000 * 1e18, postLevel, "wrong facilitator bucket level");
+    assertEq(preBridgedAmount + 6000 * 1e18, srcGhoTokenPool.getCurrentBridgedAmount());
+    assertEq(preBridgeLimit, srcGhoTokenPool.getBridgeLimit());
 
     bytes32 metaDataHash = s_offRamp.metadataHash();
 
@@ -334,26 +288,35 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     Internal.ExecutionReport memory execReport = _generateReportFromMessages(messages);
 
     uint256 preGhoTokenBalanceUser = dstGhoToken.balanceOf(USER);
+    (uint256 preCapacity, uint256 preLevel) = GhoToken(address(dstGhoToken)).getFacilitatorBucket(
+      address(dstGhoTokenPool)
+    );
 
     vm.resumeGasMetering();
     s_offRamp.execute(execReport, new uint256[](0));
     vm.pauseGasMetering();
 
     assertEq(preGhoTokenBalanceUser + 6000 * 1e18, dstGhoToken.balanceOf(USER), "Wrong balance on destination");
-    assertEq(dstGhoTokenPool.getCurrentBridgedAmount(), 0);
+    // Facilitator checks
+    (uint256 postCapacity, uint256 postLevel) = GhoToken(address(dstGhoToken)).getFacilitatorBucket(
+      address(dstGhoTokenPool)
+    );
+    assertEq(postCapacity, preCapacity);
+    assertEq(preLevel + 6000 * 1e18, postLevel, "wrong facilitator bucket level");
   }
 
   function testRevertRateLimitReached() public {
+    // increase bridge limit to hit the rate limit error
+    vm.startPrank(AAVE_DAO);
+    srcGhoTokenPool.setBridgeLimit(type(uint256).max);
+    vm.startPrank(OWNER);
+
     RateLimiter.Config memory rateLimiterConfig = getOutboundRateLimiterConfig();
 
     // will revert due to rate limit of tokenPool
     sendRequestGho(1, rateLimiterConfig.capacity + 1, true, false);
 
     // max capacity, won't revert
-
-    // Mint some GHO to inflate UpgradeableTokenPool facilitator level
-    _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), rateLimiterConfig.capacity);
-    vm.startPrank(OWNER);
     sendRequestGho(1, rateLimiterConfig.capacity, false, false);
 
     // revert due to capacity exceed
@@ -363,13 +326,42 @@ contract GHOTokenPoolRemoteE2E is E2E, GHOBaseTest {
     vm.warp(BLOCK_TIME + 1);
 
     // won't revert due to refill
-    _inflateFacilitatorLevel(address(srcGhoTokenPool), address(srcGhoToken), 100);
-    vm.startPrank(OWNER);
     sendRequestGho(2, 100, false, false);
   }
 
   function testRevertOnLessTokenToCoverFee() public {
     sendRequestGho(1, 1000, false, true);
+  }
+
+  function testRevertBridgeLimitReached() public {
+    // increase ccip rate limit to hit the bridge limit error
+    vm.startPrank(AAVE_DAO);
+    srcGhoTokenPool.setChainRateLimiterConfig(
+      DEST_CHAIN_SELECTOR,
+      RateLimiter.Config({isEnabled: true, capacity: uint128(INITIAL_BRIDGE_LIMIT * 2), rate: 1e15}),
+      getInboundRateLimiterConfig()
+    );
+    vm.warp(block.timestamp + 100); // wait to refill capacity
+    vm.startPrank(OWNER);
+
+    // will revert due to bridge limit
+    sendRequestGho(1, uint128(INITIAL_BRIDGE_LIMIT + 1), true, false);
+
+    // max bridge limit, won't revert
+    sendRequestGho(1, uint128(INITIAL_BRIDGE_LIMIT), false, false);
+    assertEq(srcGhoTokenPool.getCurrentBridgedAmount(), INITIAL_BRIDGE_LIMIT);
+
+    // revert due to bridge limit exceed
+    sendRequestGho(2, 1, true, false);
+
+    // increase bridge limit
+    vm.startPrank(AAVE_DAO);
+    srcGhoTokenPool.setBridgeLimit(INITIAL_BRIDGE_LIMIT + 1);
+    vm.startPrank(OWNER);
+
+    // won't revert due to refill
+    sendRequestGho(2, 1, false, false);
+    assertEq(srcGhoTokenPool.getCurrentBridgedAmount(), INITIAL_BRIDGE_LIMIT + 1);
   }
 
   function sendRequestGho(

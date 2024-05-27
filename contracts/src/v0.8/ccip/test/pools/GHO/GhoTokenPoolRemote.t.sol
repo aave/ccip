@@ -12,9 +12,9 @@ import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {BurnMintTokenPool} from "../../../pools/BurnMintTokenPool.sol";
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
-import {GHOTokenPoolRemoteSetup} from "./GHOTokenPoolRemoteSetup.t.sol";
+import {GhoTokenPoolRemoteSetup} from "./GhoTokenPoolRemoteSetup.t.sol";
 
-contract GHOTokenPoolRemote_lockOrBurn is GHOTokenPoolRemoteSetup {
+contract GhoTokenPoolRemote_lockOrBurn is GhoTokenPoolRemoteSetup {
   function testSetupSuccess() public {
     assertEq(address(s_burnMintERC677), address(s_pool.getToken()));
     assertEq(address(s_mockARM), s_pool.getArmProxy());
@@ -112,7 +112,7 @@ contract GHOTokenPoolRemote_lockOrBurn is GHOTokenPoolRemoteSetup {
   }
 }
 
-contract GHOTokenPoolRemote_releaseOrMint is GHOTokenPoolRemoteSetup {
+contract GhoTokenPoolRemote_releaseOrMint is GhoTokenPoolRemoteSetup {
   function testPoolMintSuccess() public {
     uint256 amount = 1e19;
     vm.startPrank(s_burnMintOffRamp);
@@ -179,7 +179,7 @@ contract GHOTokenPoolRemote_releaseOrMint is GHOTokenPoolRemoteSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_upgradeability is GHOTokenPoolRemoteSetup {
+contract GhoTokenPoolEthereum_upgradeability is GhoTokenPoolRemoteSetup {
   function testInitialization() public {
     // Upgradeability
     assertEq(s_pool.REVISION(), 1);

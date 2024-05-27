@@ -5,15 +5,15 @@ import {GhoToken} from "@aave/gho-core/gho/GhoToken.sol";
 
 import {UpgradeableLockReleaseTokenPool} from "../../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
 import {BaseTest} from "../../../BaseTest.t.sol";
-import {GHOTokenPoolHandler} from "./GHOTokenPoolHandler.t.sol";
+import {GhoTokenPoolHandler} from "./GhoTokenPoolHandler.t.sol";
 
-contract GHOTokenPoolEthereumBridgeLimitInvariant is BaseTest {
-  GHOTokenPoolHandler handler;
+contract GhoTokenPoolEthereumBridgeLimitInvariant is BaseTest {
+  GhoTokenPoolHandler handler;
 
   function setUp() public override {
     super.setUp();
 
-    handler = new GHOTokenPoolHandler();
+    handler = new GhoTokenPoolHandler();
     deal(handler.tokens(0), address(handler), handler.INITIAL_BRIDGE_LIMIT());
 
     targetContract(address(handler));

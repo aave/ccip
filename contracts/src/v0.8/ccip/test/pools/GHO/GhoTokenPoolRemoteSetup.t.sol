@@ -11,9 +11,9 @@ import {BurnMintERC677} from "../../../../shared/token/ERC677/BurnMintERC677.sol
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {RouterSetup} from "../../router/RouterSetup.t.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
-import {GHOBaseTest} from "./GHOBaseTest.t.sol";
+import {GhoBaseTest} from "./GhoBaseTest.t.sol";
 
-contract GHOTokenPoolRemoteSetup is RouterSetup, GHOBaseTest {
+contract GhoTokenPoolRemoteSetup is RouterSetup, GhoBaseTest {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event TokensConsumed(uint256 tokens);
   event Burned(address indexed sender, uint256 amount);

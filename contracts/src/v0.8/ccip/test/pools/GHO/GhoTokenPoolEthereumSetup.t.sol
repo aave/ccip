@@ -18,9 +18,9 @@ import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts
 import {IERC20} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 import {RouterSetup} from "../../router/RouterSetup.t.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
-import {GHOBaseTest} from "./GHOBaseTest.t.sol";
+import {GhoBaseTest} from "./GhoBaseTest.t.sol";
 
-contract GHOTokenPoolEthereumSetup is RouterSetup, GHOBaseTest {
+contract GhoTokenPoolEthereumSetup is RouterSetup, GhoBaseTest {
   IERC20 internal s_token;
   UpgradeableLockReleaseTokenPool internal s_ghoTokenPool;
 

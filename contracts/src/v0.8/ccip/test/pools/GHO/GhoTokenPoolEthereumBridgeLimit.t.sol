@@ -9,9 +9,9 @@ import {UpgradeableLockReleaseTokenPool} from "../../../pools/GHO/UpgradeableLoc
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
-import {GHOBaseTest} from "./GHOBaseTest.t.sol";
+import {GhoBaseTest} from "./GhoBaseTest.t.sol";
 
-contract GHOTokenPoolEthereumBridgeLimitSetup is GHOBaseTest {
+contract GhoTokenPoolEthereumBridgeLimitSetup is GhoBaseTest {
   UtilsStorage public s;
 
   function setUp() public virtual override {
@@ -70,7 +70,7 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is GHOBaseTest {
   }
 }
 
-contract GHOTokenPoolEthereumBridgeLimitSimpleScenario is GHOTokenPoolEthereumBridgeLimitSetup {
+contract GhoTokenPoolEthereumBridgeLimitSimpleScenario is GhoTokenPoolEthereumBridgeLimitSetup {
   function setUp() public virtual override {
     super.setUp();
 
@@ -702,7 +702,7 @@ contract GHOTokenPoolEthereumBridgeLimitSimpleScenario is GHOTokenPoolEthereumBr
   }
 }
 
-contract GHOTokenPoolEthereumBridgeLimitTripleScenario is GHOTokenPoolEthereumBridgeLimitSetup {
+contract GhoTokenPoolEthereumBridgeLimitTripleScenario is GhoTokenPoolEthereumBridgeLimitSetup {
   function setUp() public virtual override {
     super.setUp();
 

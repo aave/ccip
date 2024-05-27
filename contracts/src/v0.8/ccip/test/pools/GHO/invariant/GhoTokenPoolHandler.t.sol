@@ -8,9 +8,9 @@ import {UpgradeableLockReleaseTokenPool} from "../../../../pools/GHO/Upgradeable
 import {UpgradeableTokenPool} from "../../../../pools/GHO/UpgradeableTokenPool.sol";
 import {RateLimiter} from "../../../../libraries/RateLimiter.sol";
 import {BaseTest} from "../../../BaseTest.t.sol";
-import {GHOBaseTest} from "../GHOBaseTest.t.sol";
+import {GhoBaseTest} from "../GhoBaseTest.t.sol";
 
-contract GHOTokenPoolHandler is GHOBaseTest {
+contract GhoTokenPoolHandler is GhoBaseTest {
   UtilsStorage public s;
 
   constructor() {

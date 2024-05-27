@@ -13,9 +13,9 @@ import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol"
 import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
-import {GHOTokenPoolEthereumSetup} from "./GHOTokenPoolEthereumSetup.t.sol";
+import {GhoTokenPoolEthereumSetup} from "./GhoTokenPoolEthereumSetup.t.sol";
 
-contract GHOTokenPoolEthereum_setRebalancer is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_setRebalancer is GhoTokenPoolEthereumSetup {
   function testSetRebalancerSuccess() public {
     assertEq(address(s_ghoTokenPool.getRebalancer()), OWNER);
     changePrank(AAVE_DAO);
@@ -31,7 +31,7 @@ contract GHOTokenPoolEthereum_setRebalancer is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_lockOrBurn is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_lockOrBurn is GhoTokenPoolEthereumSetup {
   error SenderNotAllowed(address sender);
 
   event Locked(address indexed sender, uint256 amount);
@@ -86,12 +86,12 @@ contract GHOTokenPoolEthereum_lockOrBurn is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_releaseOrMint is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_releaseOrMint is GhoTokenPoolEthereumSetup {
   event TokensConsumed(uint256 tokens);
   event Released(address indexed sender, address indexed recipient, uint256 amount);
 
   function setUp() public virtual override {
-    GHOTokenPoolEthereumSetup.setUp();
+    GhoTokenPoolEthereumSetup.setUp();
 
     UpgradeableTokenPool.ChainUpdate[] memory chainUpdate = new UpgradeableTokenPool.ChainUpdate[](1);
     chainUpdate[0] = UpgradeableTokenPool.ChainUpdate({
@@ -247,7 +247,7 @@ contract GHOTokenPoolEthereum_releaseOrMint is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_canAcceptLiquidity is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_canAcceptLiquidity is GhoTokenPoolEthereumSetup {
   function test_CanAcceptLiquiditySuccess() public {
     assertEq(true, s_ghoTokenPool.canAcceptLiquidity());
 
@@ -257,7 +257,7 @@ contract GHOTokenPoolEthereum_canAcceptLiquidity is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_provideLiquidity is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_provideLiquidity is GhoTokenPoolEthereumSetup {
   function testFuzz_ProvideLiquiditySuccess(uint256 amount) public {
     vm.assume(amount < type(uint128).max);
 
@@ -293,7 +293,7 @@ contract GHOTokenPoolEthereum_provideLiquidity is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_withdrawalLiquidity is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_withdrawalLiquidity is GhoTokenPoolEthereumSetup {
   function testFuzz_WithdrawalLiquiditySuccess(uint256 amount) public {
     vm.assume(amount < type(uint128).max);
 
@@ -329,7 +329,7 @@ contract GHOTokenPoolEthereum_withdrawalLiquidity is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_supportsInterface is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_supportsInterface is GhoTokenPoolEthereumSetup {
   function testSupportsInterfaceSuccess() public {
     assertTrue(s_ghoTokenPool.supportsInterface(s_ghoTokenPool.getLockReleaseInterfaceId()));
     assertTrue(s_ghoTokenPool.supportsInterface(type(IPool).interfaceId));
@@ -337,7 +337,7 @@ contract GHOTokenPoolEthereum_supportsInterface is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_setChainRateLimiterConfig is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_setChainRateLimiterConfig is GhoTokenPoolEthereumSetup {
   event ConfigChanged(RateLimiter.Config);
   event ChainConfigured(
     uint64 chainSelector,
@@ -348,7 +348,7 @@ contract GHOTokenPoolEthereum_setChainRateLimiterConfig is GHOTokenPoolEthereumS
   uint64 internal s_remoteChainSelector;
 
   function setUp() public virtual override {
-    GHOTokenPoolEthereumSetup.setUp();
+    GhoTokenPoolEthereumSetup.setUp();
     UpgradeableTokenPool.ChainUpdate[] memory chainUpdates = new UpgradeableTokenPool.ChainUpdate[](1);
     s_remoteChainSelector = 123124;
     chainUpdates[0] = UpgradeableTokenPool.ChainUpdate({
@@ -457,7 +457,7 @@ contract GHOTokenPoolEthereum_setChainRateLimiterConfig is GHOTokenPoolEthereumS
   }
 }
 
-contract GHOTokenPoolEthereum_setRateLimitAdmin is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_setRateLimitAdmin is GhoTokenPoolEthereumSetup {
   function testSetRateLimitAdminSuccess() public {
     assertEq(address(0), s_ghoTokenPool.getRateLimitAdmin());
     changePrank(AAVE_DAO);
@@ -475,7 +475,7 @@ contract GHOTokenPoolEthereum_setRateLimitAdmin is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_setBridgeLimit is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_setBridgeLimit is GhoTokenPoolEthereumSetup {
   event BridgeLimitUpdated(uint256 oldBridgeLimit, uint256 newBridgeLimit);
 
   function testSetBridgeLimitAdminSuccess() public {
@@ -592,7 +592,7 @@ contract GHOTokenPoolEthereum_setBridgeLimit is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_setBridgeLimitAdmin is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_setBridgeLimitAdmin is GhoTokenPoolEthereumSetup {
   function testSetBridgeLimitAdminSuccess() public {
     assertEq(address(0), s_ghoTokenPool.getBridgeLimitAdmin());
 
@@ -613,7 +613,7 @@ contract GHOTokenPoolEthereum_setBridgeLimitAdmin is GHOTokenPoolEthereumSetup {
   }
 }
 
-contract GHOTokenPoolEthereum_upgradeability is GHOTokenPoolEthereumSetup {
+contract GhoTokenPoolEthereum_upgradeability is GhoTokenPoolEthereumSetup {
   function testInitialization() public {
     // Upgradeability
     assertEq(s_ghoTokenPool.REVISION(), 1);

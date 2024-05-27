@@ -12,7 +12,7 @@ import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol"
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
 
-abstract contract GHOBaseTest is BaseTest {
+abstract contract GhoBaseTest is BaseTest {
   address internal ARM_PROXY = makeAddr("ARM_PROXY");
   address internal ROUTER = makeAddr("ROUTER");
   address internal RAMP = makeAddr("RAMP");
