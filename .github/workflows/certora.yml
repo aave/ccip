@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - certora
+      - ccip-gho
   pull_request:
     branches:
       - main
       - certora
+      - ccip-gho
 
   workflow_dispatch:
 

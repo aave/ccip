@@ -76,3 +76,38 @@ rule provideLiquidity_correctness(env e) {
   assert e.msg.sender == getRebalancer();
   assert (to_mathint(bal_after) == bal_before + amount);
 }
+
+
+/* ==============================================================================
+   rule: only_lockOrBurn_can_increase_currentBridged
+   ============================================================================*/
+rule only_lockOrBurn_can_increase_currentBridged(env e) {
+  method f;
+  calldataarg args;
+
+  uint256 curr_bridge_before = getCurrentBridgedAmount();
+  f (e,args);
+  uint256 curr_bridge_after = getCurrentBridgedAmount();
+
+  assert 
+    curr_bridge_after > curr_bridge_before =>
+    f.selector==sig:lockOrBurn(address,bytes calldata,uint256,uint64,bytes calldata).selector;
+}
+
+
+/* ==============================================================================
+   rule: only_releaseOrMint_can_deccrease_currentBridged
+   ============================================================================*/
+rule only_releaseOrMint_can_decrease_currentBridged(env e) {
+  method f;
+  calldataarg args;
+
+  uint256 curr_bridge_before = getCurrentBridgedAmount();
+  f (e,args);
+  uint256 curr_bridge_after = getCurrentBridgedAmount();
+
+  assert 
+    curr_bridge_after < curr_bridge_before =>
+    f.selector==sig:releaseOrMint(bytes memory,address,uint256,uint64,bytes memory).selector;
+}
+
