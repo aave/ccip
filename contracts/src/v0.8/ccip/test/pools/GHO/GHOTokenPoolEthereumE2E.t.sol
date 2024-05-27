@@ -14,23 +14,19 @@ import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMi
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {IPool} from "../../../interfaces/pools/IPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
 import {E2E} from "../End2End.t.sol";
+import {GHOBaseTest} from "./GHOBaseTest.t.sol";
 
-contract GHOTokenPoolEthereumE2E is E2E {
+contract GHOTokenPoolEthereumE2E is E2E, GHOBaseTest {
   using Internal for Internal.EVM2EVMMessage;
-
-  address internal USER = makeAddr("user");
-  address internal AAVE_DAO = makeAddr("AAVE_DAO");
-  address internal PROXY_ADMIN = makeAddr("PROXY_ADMIN");
-
-  uint256 internal INITIAL_BRIDGE_LIMIT = 100e6 * 1e18;
 
   IBurnMintERC20 internal srcGhoToken;
   IBurnMintERC20 internal dstGhoToken;
   UpgradeableLockReleaseTokenPool internal srcGhoTokenPool;
   UpgradeableBurnMintTokenPool internal dstGhoTokenPool;
 
-  function setUp() public virtual override {
+  function setUp() public virtual override(E2E, BaseTest) {
     E2E.setUp();
 
     // Deploy GHO Token on source chain

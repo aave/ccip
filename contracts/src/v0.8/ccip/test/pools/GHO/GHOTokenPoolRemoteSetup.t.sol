@@ -10,8 +10,10 @@ import {Router} from "../../../Router.sol";
 import {BurnMintERC677} from "../../../../shared/token/ERC677/BurnMintERC677.sol";
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {RouterSetup} from "../../router/RouterSetup.t.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+import {GHOBaseTest} from "./GHOBaseTest.t.sol";
 
-contract GHOTokenPoolRemoteSetup is RouterSetup {
+contract GHOTokenPoolRemoteSetup is RouterSetup, GHOBaseTest {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event TokensConsumed(uint256 tokens);
   event Burned(address indexed sender, uint256 amount);
@@ -22,10 +24,7 @@ contract GHOTokenPoolRemoteSetup is RouterSetup {
 
   UpgradeableBurnMintTokenPool internal s_pool;
 
-  address internal AAVE_DAO = makeAddr("AAVE_DAO");
-  address internal PROXY_ADMIN = makeAddr("PROXY_ADMIN");
-
-  function setUp() public virtual override {
+  function setUp() public virtual override(RouterSetup, BaseTest) {
     RouterSetup.setUp();
 
     // GHO deployment

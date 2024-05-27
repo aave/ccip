@@ -17,20 +17,17 @@ import {Router} from "../../../Router.sol";
 import {IERC165} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 import {IERC20} from "../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 import {RouterSetup} from "../../router/RouterSetup.t.sol";
+import {BaseTest} from "../../BaseTest.t.sol";
+import {GHOBaseTest} from "./GHOBaseTest.t.sol";
 
-contract GHOTokenPoolEthereumSetup is RouterSetup {
+contract GHOTokenPoolEthereumSetup is RouterSetup, GHOBaseTest {
   IERC20 internal s_token;
   UpgradeableLockReleaseTokenPool internal s_ghoTokenPool;
 
   address internal s_allowedOnRamp = address(123);
   address internal s_allowedOffRamp = address(234);
 
-  address internal AAVE_DAO = makeAddr("AAVE_DAO");
-  address internal PROXY_ADMIN = makeAddr("PROXY_ADMIN");
-
-  uint256 internal INITIAL_BRIDGE_LIMIT = 100e6 * 1e18;
-
-  function setUp() public virtual override {
+  function setUp() public virtual override(RouterSetup, BaseTest) {
     RouterSetup.setUp();
 
     // GHO deployment
