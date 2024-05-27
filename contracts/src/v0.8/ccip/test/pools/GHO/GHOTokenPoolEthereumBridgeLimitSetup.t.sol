@@ -10,7 +10,6 @@ import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMi
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 
-import {console2} from "forge-std/console2.sol";
 contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
   address internal ARM_PROXY = makeAddr("ARM_PROXY");
   address internal ROUTER = makeAddr("ROUTER");
@@ -31,7 +30,6 @@ contract GHOTokenPoolEthereumBridgeLimitSetup is BaseTest {
   uint256 public bridged;
 
   function setUp() public virtual override {
-    console2.log("ENTRA");
     // Ethereum with id 0
     chainsList.push(0);
     tokens[0] = address(new GhoToken(AAVE_DAO));

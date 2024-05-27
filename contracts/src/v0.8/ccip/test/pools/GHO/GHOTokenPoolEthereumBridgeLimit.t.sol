@@ -820,29 +820,16 @@ contract GHOTokenPoolEthereumBridgeLimitTripleScenario is GHOTokenPoolEthereumBr
     uint256 newBridgeLimit = amount / 2;
     _updateBridgeLimit(newBridgeLimit);
     _updateBucketCapacity(1, newBridgeLimit);
-    // _updateBucketCapacity(2, newBridgeLimit);
 
-    // assertEq(_getMaxToBridgeIn(2), newBridgeLimit);
-
-    // Reverts
+    // Moving to Avalanche is not a problem because bucket capacity is higher than bridge limit
+    assertGt(_getMaxToBridgeIn(2), newBridgeLimit);
     _bridgeGho(1, 2, USER, amount);
-  }
 
-  /// @dev Test showcasing a user locked due to a bridge limit reduction below current bridged amount
-  function testUserLockedBridgeLimitReductionBelowLevel2() public {
-    // Bridge all out to Arbitrum
-    uint256 amount = _getMaxToBridgeOut(0);
-    deal(tokens[0], USER, amount);
-    _bridgeGho(0, 1, USER, amount);
-
-    // Reduce bridge limit below current bridged amount
-    uint256 newBridgeLimit = amount / 2;
-    _updateBridgeLimit(newBridgeLimit);
-    _updateBucketCapacity(2, newBridgeLimit);
-
-    // assertEq(_getMaxToBridgeIn(2), newBridgeLimit);
-
-    // Reverts
-    _bridgeGho(1, 2, USER, amount);
+    // Moving back to Arbitrum reverts on destination
+    assertEq(_getMaxToBridgeIn(1), newBridgeLimit);
+    _moveGhoOrigin(2, 1, USER, amount);
+    vm.expectRevert();
+    vm.prank(RAMP);
+    IPool(pools[1]).releaseOrMint(bytes(""), USER, amount, uint64(2), bytes(""));
   }
 }
