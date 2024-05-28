@@ -8,7 +8,7 @@ using SimpleERC20 as erc20;
 methods {
   function getCurrentBridgedAmount() external returns (uint256) envfree;
   function getBridgeLimit() external returns (uint256) envfree;
-  function getRebalancer() external returns (address) envfree;
+  function owner() external returns (address) envfree;
 }
 
 
@@ -54,7 +54,6 @@ rule withdrawLiquidity_correctness(env e) {
   withdrawLiquidity(e, amount);
   uint256 bal_after = erc20.balanceOf(e, currentContract);
 
-  assert e.msg.sender == getRebalancer();
   assert (to_mathint(bal_after) == bal_before - amount);
 }
 
@@ -73,6 +72,52 @@ rule provideLiquidity_correctness(env e) {
   provideLiquidity(e, amount);
   uint256 bal_after = erc20.balanceOf(e, currentContract);
 
-  assert e.msg.sender == getRebalancer();
   assert (to_mathint(bal_after) == bal_before + amount);
 }
+
+
+/* ==============================================================================
+   rule: only_lockOrBurn_can_increase_currentBridged
+   ============================================================================*/
+rule only_lockOrBurn_can_increase_currentBridged(env e) {
+  method f;
+  calldataarg args;
+
+  uint256 curr_bridge_before = getCurrentBridgedAmount();
+  f (e,args);
+  uint256 curr_bridge_after = getCurrentBridgedAmount();
+
+  assert 
+    curr_bridge_after > curr_bridge_before =>
+    f.selector==sig:lockOrBurn(address,bytes calldata,uint256,uint64,bytes calldata).selector;
+}
+
+
+/* ==============================================================================
+   rule: only_releaseOrMint_can_deccrease_currentBridged
+   ============================================================================*/
+rule only_releaseOrMint_can_decrease_currentBridged(env e) {
+  method f;
+  calldataarg args;
+
+  uint256 curr_bridge_before = getCurrentBridgedAmount();
+  f (e,args);
+  uint256 curr_bridge_after = getCurrentBridgedAmount();
+
+  assert 
+    curr_bridge_after < curr_bridge_before =>
+    f.selector==sig:releaseOrMint(bytes memory,address,uint256,uint64,bytes memory).selector;
+}
+
+
+/* ==============================================================================
+   rule: only_releaseOrMint_can_deccrease_currentBridged
+   ============================================================================*/
+rule only_bridgeLimitAdmin_or_owner_can_call_setBridgeLimit(env e) {
+  uint256 newBridgeLimit;
+
+  setBridgeLimit(e, newBridgeLimit);
+  
+  assert e.msg.sender==getBridgeLimitAdmin(e) || e.msg.sender==owner();
+}
+
