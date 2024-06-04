@@ -43,10 +43,8 @@ abstract contract GhoBaseTest is BaseTest {
   ) internal returns (address) {
     // Deploy BurnMintTokenPool for GHO token on source chain
     UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(ghoToken, arm, false);
-    // Imple init
-    address[] memory emptyArray = new address[](0);
-    tokenPoolImpl.initialize(owner, emptyArray, router);
     // proxy deploy and init
+    address[] memory emptyArray = new address[](0);
     bytes memory tokenPoolInitParams = abi.encodeWithSignature(
       "initialize(address,address[],address)",
       owner,
@@ -76,10 +74,8 @@ abstract contract GhoBaseTest is BaseTest {
     address proxyAdmin
   ) internal returns (address) {
     UpgradeableLockReleaseTokenPool tokenPoolImpl = new UpgradeableLockReleaseTokenPool(ghoToken, arm, false, true);
-    // Imple init
-    address[] memory emptyArray = new address[](0);
-    tokenPoolImpl.initialize(owner, emptyArray, router, bridgeLimit);
     // proxy deploy and init
+    address[] memory emptyArray = new address[](0);
     bytes memory tokenPoolInitParams = abi.encodeWithSignature(
       "initialize(address,address[],address,uint256)",
       owner,
