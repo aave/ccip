@@ -45,14 +45,15 @@ contract GhoTokenPoolHandler is GhoBaseTest {
   function bridgeGho(uint256 fromChain, uint256 toChain, uint256 amount) public {
     fromChain = bound(fromChain, 0, 2);
     toChain = bound(toChain, 0, 2);
-    vm.assume(fromChain != toChain);
-    uint256 maxBalance = GhoToken(s.tokens[fromChain]).balanceOf(address(this));
-    uint256 maxToBridge = _getMaxToBridgeOut(s, fromChain);
-    uint256 maxAmount = maxBalance > maxToBridge ? maxToBridge : maxBalance;
-    amount = bound(amount, 0, maxAmount);
+    if (fromChain != toChain) {
+      uint256 maxBalance = GhoToken(s.tokens[fromChain]).balanceOf(address(this));
+      uint256 maxToBridge = _getMaxToBridgeOut(s, fromChain);
+      uint256 maxAmount = maxBalance > maxToBridge ? maxToBridge : maxBalance;
+      amount = bound(amount, 0, maxAmount);
 
-    if (amount > 0) {
-      _bridgeGho(s, fromChain, toChain, address(this), amount);
+      if (amount > 0) {
+        _bridgeGho(s, fromChain, toChain, address(this), amount);
+      }
     }
   }
 
