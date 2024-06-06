@@ -1,0 +1,62 @@
+name: solidity
+
+on: push
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        product: [ccip]
+    name: Foundry Tests ${{ matrix.product }}
+    # See https://github.com/foundry-rs/foundry/issues/3827
+    runs-on: ubuntu-22.04
+
+    # The if statements for steps after checkout repo is workaround for
+    # passing required check for PRs that don't have filtered changes.
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          submodules: recursive
+
+      # Only needed because we use the NPM versions of packages
+      # and not native Foundry. This is to make sure the dependencies
+      # stay in sync.
+      - name: Setup NodeJS
+        uses: ./.github/actions/setup-nodejs
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          # Has to match the `make foundry` version.
+          version: nightly-2cb875799419c907cc3709e586ece2559e6b340e
+
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build
+        id: build
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: ${{ matrix.product }}
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv
+        id: test
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: ${{ matrix.product }}
+
+      - name: Run Forge snapshot
+        if: ${{ !contains(fromJson('["vrf"]'), matrix.product) && !contains(fromJson('["automation"]'), matrix.product) && needs.changes.outputs.changes == 'true' }}
+        run: |
+          forge snapshot --nmt "testFuzz_\w{1,}?" --check gas-snapshots/${{ matrix.product }}.gas-snapshot
+        id: snapshot
+        working-directory: contracts
+        env:
+          FOUNDRY_PROFILE: ${{ matrix.product }}
