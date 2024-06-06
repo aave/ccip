@@ -20,7 +20,7 @@ contract GhoTokenPoolEthereumBridgeLimitInvariant is BaseTest {
     bytes4[] memory selectors = new bytes4[](2);
     selectors[0] = GhoTokenPoolHandler.bridgeGho.selector;
     selectors[1] = GhoTokenPoolHandler.updateBucketCapacity.selector;
-    targetSelector(selectors);
+    targetSelector(FuzzSelector({addr: address(handler), selectors: selectors}));
   }
 
   /// forge-config: ccip.invariant.fail-on-revert = true
