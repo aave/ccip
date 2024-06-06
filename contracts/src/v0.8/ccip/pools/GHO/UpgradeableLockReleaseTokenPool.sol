@@ -30,7 +30,9 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
 
   error BridgeLimitExceeded(uint256 bridgeLimit);
   error NotEnoughBridgedAmount();
+
   event BridgeLimitUpdated(uint256 oldBridgeLimit, uint256 newBridgeLimit);
+  event BridgeLimitAdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
   string public constant override typeAndVersion = "LockReleaseTokenPool 1.4.0";
 
@@ -193,7 +195,9 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @dev Only callable by the owner.
   /// @param bridgeLimitAdmin The new bridge limit admin address.
   function setBridgeLimitAdmin(address bridgeLimitAdmin) external onlyOwner {
+    address oldAdmin = s_bridgeLimitAdmin;
     s_bridgeLimitAdmin = bridgeLimitAdmin;
+    emit BridgeLimitAdminUpdated(oldAdmin, bridgeLimitAdmin);
   }
 
   /// @notice Gets the bridge limit

@@ -477,6 +477,7 @@ contract GhoTokenPoolEthereum_setRateLimitAdmin is GhoTokenPoolEthereumSetup {
 
 contract GhoTokenPoolEthereum_setBridgeLimit is GhoTokenPoolEthereumSetup {
   event BridgeLimitUpdated(uint256 oldBridgeLimit, uint256 newBridgeLimit);
+  event BridgeLimitAdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
   function testSetBridgeLimitAdminSuccess() public {
     assertEq(INITIAL_BRIDGE_LIMIT, s_ghoTokenPool.getBridgeLimit());
@@ -493,6 +494,10 @@ contract GhoTokenPoolEthereum_setBridgeLimit is GhoTokenPoolEthereumSetup {
 
     // Bridge Limit Admin
     address bridgeLimitAdmin = address(28973509103597907);
+
+    vm.expectEmit();
+    emit BridgeLimitAdminUpdated(address(0), bridgeLimitAdmin);
+
     s_ghoTokenPool.setBridgeLimitAdmin(bridgeLimitAdmin);
 
     vm.startPrank(bridgeLimitAdmin);
@@ -593,11 +598,17 @@ contract GhoTokenPoolEthereum_setBridgeLimit is GhoTokenPoolEthereumSetup {
 }
 
 contract GhoTokenPoolEthereum_setBridgeLimitAdmin is GhoTokenPoolEthereumSetup {
+  event BridgeLimitAdminUpdated(address indexed oldAdmin, address indexed newAdmin);
+
   function testSetBridgeLimitAdminSuccess() public {
     assertEq(address(0), s_ghoTokenPool.getBridgeLimitAdmin());
 
     address bridgeLimitAdmin = address(28973509103597907);
     changePrank(AAVE_DAO);
+
+    vm.expectEmit();
+    emit BridgeLimitAdminUpdated(address(0), bridgeLimitAdmin);
+
     s_ghoTokenPool.setBridgeLimitAdmin(bridgeLimitAdmin);
 
     assertEq(bridgeLimitAdmin, s_ghoTokenPool.getBridgeLimitAdmin());
