@@ -61,7 +61,7 @@ contract GhoTokenPoolHandler is GhoBaseTest {
   function updateBucketCapacity(uint256 chain, uint128 newCapacity) public {
     chain = bound(chain, 1, 2);
     uint256 otherChain = (chain % 2) + 1;
-    vm.assume(newCapacity >= s.bridged);
+    newCapacity = uint128(bound(newCapacity, s.bridged, type(uint128).max));
 
     uint256 oldCapacity = s.bucketCapacities[chain];
 
