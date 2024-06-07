@@ -182,7 +182,7 @@ contract GhoTokenPoolRemote_releaseOrMint is GhoTokenPoolRemoteSetup {
 contract GhoTokenPoolEthereum_upgradeability is GhoTokenPoolRemoteSetup {
   function testInitialization() public {
     // Upgradeability
-    assertEq(s_pool.REVISION(), 1);
+    assertEq(_getUpgradeableVersion(address(s_pool)), 1);
     vm.startPrank(PROXY_ADMIN);
     (bool ok, bytes memory result) = address(s_pool).staticcall(
       abi.encodeWithSelector(TransparentUpgradeableProxy.admin.selector)
@@ -209,17 +209,17 @@ contract GhoTokenPoolEthereum_upgradeability is GhoTokenPoolRemoteSetup {
     TransparentUpgradeableProxy(payable(address(s_pool))).upgradeToAndCall(address(newImpl), mockImpleParams);
 
     vm.startPrank(OWNER);
-    assertEq(s_pool.REVISION(), 2);
+    assertEq(_getUpgradeableVersion(address(s_pool)), 2);
   }
 
   function testUpgradeAdminReverts() public {
     vm.expectRevert();
     TransparentUpgradeableProxy(payable(address(s_pool))).upgradeToAndCall(address(0), bytes(""));
-    assertEq(s_pool.REVISION(), 1);
+    assertEq(_getUpgradeableVersion(address(s_pool)), 1);
 
     vm.expectRevert();
     TransparentUpgradeableProxy(payable(address(s_pool))).upgradeTo(address(0));
-    assertEq(s_pool.REVISION(), 1);
+    assertEq(_getUpgradeableVersion(address(s_pool)), 1);
   }
 
   function testChangeAdmin() public {

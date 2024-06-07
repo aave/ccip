@@ -20,12 +20,4 @@ contract MockUpgradeable is Initializable {
   function initialize() public reinitializer(2) {
     // Intentionally left bank
   }
-
-  /**
-   * @notice Returns the revision number
-   * @return The revision number
-   */
-  function REVISION() public pure returns (uint256) {
-    return 2;
-  }
 }
