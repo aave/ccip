@@ -6,5 +6,5 @@ forge-std/=foundry-lib/forge-std/src/
 hardhat/=node_modules/hardhat/
 @eth-optimism/=node_modules/@eth-optimism/
 @scroll-tech/=node_modules/@scroll-tech/
-@aave/gho-core/=node_modules/@aave/gho/src/contracts/
+@aave/gho-core/=foundry-lib/gho-core/src/contracts/
 solidity-utils/=foundry-lib/solidity-utils/src/

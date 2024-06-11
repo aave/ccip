@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
+
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
 
@@ -8,15 +10,14 @@ import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
 
 import {IRouter} from "../../interfaces/IRouter.sol";
-import {VersionedInitializable} from "./VersionedInitializable.sol";
 
 /// @title UpgradeableBurnMintTokenPool
 /// @author Aave Labs
 /// @notice Upgradeable version of Chainlink's CCIP BurnMintTokenPool
 /// @dev Contract adaptations:
-/// - Implementation of VersionedInitializable to allow upgrades
+/// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
-contract UpgradeableBurnMintTokenPool is VersionedInitializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
+contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
   string public constant override typeAndVersion = "BurnMintTokenPool 1.4.0";
 
   /// @dev Constructor
@@ -51,16 +52,5 @@ contract UpgradeableBurnMintTokenPool is VersionedInitializable, UpgradeableBurn
   /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
   function _burn(uint256 amount) internal virtual override {
     IBurnMintERC20(address(i_token)).burn(amount);
-  }
-
-  /// @notice Returns the revision number
-  /// @return The revision number
-  function REVISION() public pure virtual returns (uint256) {
-    return 1;
-  }
-
-  /// @inheritdoc VersionedInitializable
-  function getRevision() internal pure virtual override returns (uint256) {
-    return REVISION();
   }
 }

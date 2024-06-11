@@ -1,39 +1,42 @@
 ```diff
-diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..f07f8c3a28 100644
+diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
+index 9af0f22f4c..58be87812f 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
-+++ b/src/v0.8/ccip/pools/UpgradeableBurnMintTokenPool.sol
-@@ -1,29 +1,66 @@
++++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
+@@ -1,28 +1,55 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
-
- import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
- import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
-
+ 
+-import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
+-import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
++import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
+ 
 -import {TokenPool} from "./TokenPool.sol";
 -import {BurnMintTokenPoolAbstract} from "./BurnMintTokenPoolAbstract.sol";
-+import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
-+import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
-
++import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
++import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
+ 
 -/// @notice This pool mints and burns a 3rd-party token.
 -/// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
 -/// It either accepts any address as originalSender, or only accepts whitelisted originalSender.
 -/// The only way to change whitelisting mode is to deploy a new pool.
 -/// If that is expected, please make sure the token's burner/minter roles are adjustable.
 -contract BurnMintTokenPool is BurnMintTokenPoolAbstract, ITypeAndVersion {
-+import {IRouter} from "../interfaces/IRouter.sol";
-+import {VersionedInitializable} from "./VersionedInitializable.sol";
++import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
++import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
++
++import {IRouter} from "../../interfaces/IRouter.sol";
 +
 +/// @title UpgradeableBurnMintTokenPool
 +/// @author Aave Labs
 +/// @notice Upgradeable version of Chainlink's CCIP BurnMintTokenPool
 +/// @dev Contract adaptations:
-+/// - Implementation of VersionedInitializable to allow upgrades
++/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
-+contract UpgradeableBurnMintTokenPool is VersionedInitializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
++contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
    string public constant override typeAndVersion = "BurnMintTokenPool 1.4.0";
-
+ 
 +  /// @dev Constructor
 +  /// @param token The bridgeable token that is managed by this pool.
 +  /// @param armProxy The address of the arm proxy
@@ -47,7 +50,7 @@ index 9af0f22f4c..f07f8c3a28 100644
 -  ) TokenPool(token, allowlist, armProxy, router) {}
 +    bool allowlistEnabled
 +  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
-
+ 
 -  /// @inheritdoc BurnMintTokenPoolAbstract
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.
@@ -72,16 +75,4 @@ index 9af0f22f4c..f07f8c3a28 100644
    function _burn(uint256 amount) internal virtual override {
      IBurnMintERC20(address(i_token)).burn(amount);
    }
-+
-+  /// @notice Returns the revision number
-+  /// @return The revision number
-+  function REVISION() public pure virtual returns (uint256) {
-+    return 1;
-+  }
-+
-+  /// @inheritdoc VersionedInitializable
-+  function getRevision() internal pure virtual override returns (uint256) {
-+    return REVISION();
-+  }
- }
 ```

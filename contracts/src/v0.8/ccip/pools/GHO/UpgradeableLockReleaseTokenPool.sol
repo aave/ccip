@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
+import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
+
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {ILiquidityContainer} from "../../../rebalancer/interfaces/ILiquidityContainer.sol";
 
@@ -11,21 +13,15 @@ import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/tok
 import {SafeERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IRouter} from "../../interfaces/IRouter.sol";
-import {VersionedInitializable} from "./VersionedInitializable.sol";
 
 /// @title UpgradeableLockReleaseTokenPool
 /// @author Aave Labs
 /// @notice Upgradeable version of Chainlink's CCIP LockReleaseTokenPool
 /// @dev Contract adaptations:
-/// - Implementation of VersionedInitializable to allow upgrades
+/// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
-contract UpgradeableLockReleaseTokenPool is
-  VersionedInitializable,
-  UpgradeableTokenPool,
-  ILiquidityContainer,
-  ITypeAndVersion
-{
+contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion {
   using SafeERC20 for IERC20;
 
   error InsufficientLiquidity();
@@ -34,7 +30,9 @@ contract UpgradeableLockReleaseTokenPool is
 
   error BridgeLimitExceeded(uint256 bridgeLimit);
   error NotEnoughBridgedAmount();
+
   event BridgeLimitUpdated(uint256 oldBridgeLimit, uint256 newBridgeLimit);
+  event BridgeLimitAdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 
   string public constant override typeAndVersion = "LockReleaseTokenPool 1.4.0";
 
@@ -197,7 +195,9 @@ contract UpgradeableLockReleaseTokenPool is
   /// @dev Only callable by the owner.
   /// @param bridgeLimitAdmin The new bridge limit admin address.
   function setBridgeLimitAdmin(address bridgeLimitAdmin) external onlyOwner {
+    address oldAdmin = s_bridgeLimitAdmin;
     s_bridgeLimitAdmin = bridgeLimitAdmin;
+    emit BridgeLimitAdminUpdated(oldAdmin, bridgeLimitAdmin);
   }
 
   /// @notice Gets the bridge limit
@@ -262,16 +262,5 @@ contract UpgradeableLockReleaseTokenPool is
     if (msg.sender != s_rateLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
 
     _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
-  }
-
-  /// @notice Returns the revision number
-  /// @return The revision number
-  function REVISION() public pure virtual returns (uint256) {
-    return 1;
-  }
-
-  /// @inheritdoc VersionedInitializable
-  function getRevision() internal pure virtual override returns (uint256) {
-    return REVISION();
   }
 }

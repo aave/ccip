@@ -43,10 +43,8 @@ abstract contract GhoBaseTest is BaseTest {
   ) internal returns (address) {
     // Deploy BurnMintTokenPool for GHO token on source chain
     UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(ghoToken, arm, false);
-    // Imple init
-    address[] memory emptyArray = new address[](0);
-    tokenPoolImpl.initialize(owner, emptyArray, router);
     // proxy deploy and init
+    address[] memory emptyArray = new address[](0);
     bytes memory tokenPoolInitParams = abi.encodeWithSignature(
       "initialize(address,address[],address)",
       owner,
@@ -76,10 +74,8 @@ abstract contract GhoBaseTest is BaseTest {
     address proxyAdmin
   ) internal returns (address) {
     UpgradeableLockReleaseTokenPool tokenPoolImpl = new UpgradeableLockReleaseTokenPool(ghoToken, arm, false, true);
-    // Imple init
-    address[] memory emptyArray = new address[](0);
-    tokenPoolImpl.initialize(owner, emptyArray, router, bridgeLimit);
     // proxy deploy and init
+    address[] memory emptyArray = new address[](0);
     bytes memory tokenPoolInitParams = abi.encodeWithSignature(
       "initialize(address,address[],address,uint256)",
       owner,
@@ -118,6 +114,11 @@ abstract contract GhoBaseTest is BaseTest {
     bytes32 ERC1967_IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
     bytes32 implSlot = vm.load(proxy, ERC1967_IMPLEMENTATION_SLOT);
     return address(uint160(uint256(implSlot)));
+  }
+
+  function _getUpgradeableVersion(address proxy) internal view returns (uint8) {
+    // version is 1st slot
+    return uint8(uint256(vm.load(proxy, bytes32(uint256(0)))));
   }
 
   function _enableLane(UtilsStorage storage s, uint256 fromId, uint256 toId) internal {
