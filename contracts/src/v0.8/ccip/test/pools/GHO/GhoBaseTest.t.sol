@@ -116,6 +116,11 @@ abstract contract GhoBaseTest is BaseTest {
     return address(uint160(uint256(implSlot)));
   }
 
+  function _getUpgradeableVersion(address proxy) internal view returns (uint8) {
+    // version is 1st slot
+    return uint8(uint256(vm.load(proxy, bytes32(uint256(0)))));
+  }
+
   function _enableLane(UtilsStorage storage s, uint256 fromId, uint256 toId) internal {
     // from
     UpgradeableTokenPool.ChainUpdate[] memory chainUpdate = new UpgradeableTokenPool.ChainUpdate[](1);

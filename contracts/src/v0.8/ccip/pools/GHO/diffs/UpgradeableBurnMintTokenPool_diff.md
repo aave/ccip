@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..63044b4d7e 100644
+index 9af0f22f4c..58be87812f 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,29 +1,62 @@
+@@ -1,28 +1,55 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -75,11 +75,4 @@ index 9af0f22f4c..63044b4d7e 100644
    function _burn(uint256 amount) internal virtual override {
      IBurnMintERC20(address(i_token)).burn(amount);
    }
-+
-+  /// @notice Returns the revision number
-+  /// @return The revision number
-+  function REVISION() public pure virtual returns (uint256) {
-+    return 1;
-+  }
- }
 ```

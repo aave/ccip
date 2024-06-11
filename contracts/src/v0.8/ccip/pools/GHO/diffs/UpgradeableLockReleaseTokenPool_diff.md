@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 1a17fa0398..9e06e60588 100644
+index 1a17fa0398..9a30b1e977 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,26 +1,39 @@
@@ -187,15 +187,4 @@ index 1a17fa0398..9e06e60588 100644
    /// @notice Checks if the pool can accept liquidity.
    /// @return true if the pool can accept liquidity, false otherwise.
    function canAcceptLiquidity() external view returns (bool) {
-@@ -166,4 +263,10 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
- 
-     _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
-   }
-+
-+  /// @notice Returns the revision number
-+  /// @return The revision number
-+  function REVISION() public pure virtual returns (uint256) {
-+    return 1;
-+  }
- }
 ```

@@ -627,7 +627,7 @@ contract GhoTokenPoolEthereum_setBridgeLimitAdmin is GhoTokenPoolEthereumSetup {
 contract GhoTokenPoolEthereum_upgradeability is GhoTokenPoolEthereumSetup {
   function testInitialization() public {
     // Upgradeability
-    assertEq(s_ghoTokenPool.REVISION(), 1);
+    assertEq(_getUpgradeableVersion(address(s_ghoTokenPool)), 1);
     vm.startPrank(PROXY_ADMIN);
     (bool ok, bytes memory result) = address(s_ghoTokenPool).staticcall(
       abi.encodeWithSelector(TransparentUpgradeableProxy.admin.selector)
@@ -654,17 +654,17 @@ contract GhoTokenPoolEthereum_upgradeability is GhoTokenPoolEthereumSetup {
     TransparentUpgradeableProxy(payable(address(s_ghoTokenPool))).upgradeToAndCall(address(newImpl), mockImpleParams);
 
     vm.startPrank(OWNER);
-    assertEq(s_ghoTokenPool.REVISION(), 2);
+    assertEq(_getUpgradeableVersion(address(s_ghoTokenPool)), 2);
   }
 
   function testUpgradeAdminReverts() public {
     vm.expectRevert();
     TransparentUpgradeableProxy(payable(address(s_ghoTokenPool))).upgradeToAndCall(address(0), bytes(""));
-    assertEq(s_ghoTokenPool.REVISION(), 1);
+    assertEq(_getUpgradeableVersion(address(s_ghoTokenPool)), 1);
 
     vm.expectRevert();
     TransparentUpgradeableProxy(payable(address(s_ghoTokenPool))).upgradeTo(address(0));
-    assertEq(s_ghoTokenPool.REVISION(), 1);
+    assertEq(_getUpgradeableVersion(address(s_ghoTokenPool)), 1);
   }
 
   function testChangeAdmin() public {

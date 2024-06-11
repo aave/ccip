@@ -263,10 +263,4 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
 
     _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
   }
-
-  /// @notice Returns the revision number
-  /// @return The revision number
-  function REVISION() public pure virtual returns (uint256) {
-    return 1;
-  }
 }

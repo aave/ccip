@@ -53,10 +53,4 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   function _burn(uint256 amount) internal virtual override {
     IBurnMintERC20(address(i_token)).burn(amount);
   }
-
-  /// @notice Returns the revision number
-  /// @return The revision number
-  function REVISION() public pure virtual returns (uint256) {
-    return 1;
-  }
 }
