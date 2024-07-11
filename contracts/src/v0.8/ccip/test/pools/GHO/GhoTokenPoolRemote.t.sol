@@ -355,11 +355,7 @@ contract GhoTokenPoolRemote_setChainRateLimiterConfig is GhoTokenPoolRemoteSetup
 
     vm.expectRevert(abi.encodeWithSelector(UpgradeableTokenPool.NonExistentChain.selector, wrongChainSelector));
     changePrank(AAVE_DAO);
-    s_pool.setChainRateLimiterConfig(
-      wrongChainSelector,
-      getOutboundRateLimiterConfig(),
-      getInboundRateLimiterConfig()
-    );
+    s_pool.setChainRateLimiterConfig(wrongChainSelector, getOutboundRateLimiterConfig(), getInboundRateLimiterConfig());
   }
 }
 

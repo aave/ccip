@@ -8,7 +8,6 @@ import {StdUtils} from "forge-std/StdUtils.sol";
 import {MockARM} from "./mocks/MockARM.sol";
 import {StructFactory} from "./StructFactory.sol";
 
-
 contract BaseTest is Test, StructFactory {
   bool private s_baseTestInitialized;
 
@@ -30,6 +29,4 @@ contract BaseTest is Test, StructFactory {
 
     s_mockARM = new MockARM();
   }
-
-
 }
