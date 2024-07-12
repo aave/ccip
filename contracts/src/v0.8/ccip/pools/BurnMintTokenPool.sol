@@ -15,8 +15,6 @@ import {BurnMintTokenPoolAbstract} from "./BurnMintTokenPoolAbstract.sol";
 contract BurnMintTokenPool is BurnMintTokenPoolAbstract, ITypeAndVersion {
   string public constant override typeAndVersion = "BurnMintTokenPool 1.4.0";
 
-  error Unauthorized(address caller);
-
   constructor(
     IBurnMintERC20 token,
     address[] memory allowlist,

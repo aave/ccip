@@ -342,7 +342,7 @@ contract GhoTokenPoolRemote_setChainRateLimiterConfig is GhoTokenPoolRemoteSetup
   function testOnlyOwnerReverts() public {
     changePrank(STRANGER);
 
-    vm.expectRevert(abi.encodeWithSelector(BurnMintTokenPool.Unauthorized.selector, STRANGER));
+    vm.expectRevert(abi.encodeWithSelector(UpgradeableBurnMintTokenPool.Unauthorized.selector, STRANGER));
     s_pool.setChainRateLimiterConfig(
       s_remoteChainSelector,
       getOutboundRateLimiterConfig(),
