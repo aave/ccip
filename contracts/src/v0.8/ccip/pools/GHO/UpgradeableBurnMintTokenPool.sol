@@ -27,6 +27,9 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   /// @dev Can be address(0) if none is configured.
   address internal s_rateLimitAdmin;
 
+  // Reserved storage space to allow for layout changes in the future.
+  uint256[50] private __gap;
+
   /// @dev Constructor
   /// @param token The bridgeable token that is managed by this pool.
   /// @param armProxy The address of the arm proxy
