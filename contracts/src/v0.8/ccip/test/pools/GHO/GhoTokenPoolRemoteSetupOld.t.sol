@@ -42,6 +42,37 @@ contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
       )
     );
 
+    // Upgrade the old pool after deployment
+    _upgradeUpgradeableBurnMintTokenPool(
+      payable(address(s_pool)),
+      address(s_burnMintERC677),
+      address(s_mockARM),
+      PROXY_ADMIN
+    );
+
+    // Give mint and burn privileges to source UpgradeableTokenPool (GHO-specific related)
+    vm.startPrank(AAVE_DAO);
+    GhoToken(address(s_burnMintERC677)).grantRole(
+      GhoToken(address(s_burnMintERC677)).FACILITATOR_MANAGER_ROLE(),
+      AAVE_DAO
+    );
+    GhoToken(address(s_burnMintERC677)).addFacilitator(address(s_pool), "UpgradeableTokenPool", type(uint128).max);
+    vm.stopPrank();
+
+    _applyChainUpdates(address(s_pool));
+  }
+
+  function _deployWithoutUpgrade() internal {
+    s_pool = UpgradeableBurnMintTokenPool(
+      _deployUpgradeableBurnMintTokenPoolOld(
+        address(s_burnMintERC677),
+        address(s_mockARM),
+        address(s_sourceRouter),
+        AAVE_DAO,
+        PROXY_ADMIN
+      )
+    );
+
     // Give mint and burn privileges to source UpgradeableTokenPool (GHO-specific related)
     vm.stopPrank();
     vm.startPrank(AAVE_DAO);
@@ -74,5 +105,6 @@ contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
     Router.OffRamp[] memory offRampUpdates = new Router.OffRamp[](1);
     offRampUpdates[0] = Router.OffRamp({sourceChainSelector: DEST_CHAIN_SELECTOR, offRamp: s_burnMintOffRamp});
     s_sourceRouter.applyRampUpdates(onRampUpdates, new Router.OffRamp[](0), offRampUpdates);
+    vm.stopPrank();
   }
 }

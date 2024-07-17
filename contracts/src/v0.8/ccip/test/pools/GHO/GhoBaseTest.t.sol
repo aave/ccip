@@ -89,10 +89,9 @@ abstract contract GhoBaseTest is BaseTest {
       tokenPoolInitParams
     );
     // Manage ownership
-    vm.stopPrank();
-    vm.prank(owner);
+    changePrank(owner);
     UpgradeableBurnMintTokenPoolOld(address(tokenPoolProxy)).acceptOwnership();
-    vm.startPrank(OWNER);
+    vm.stopPrank();
 
     return address(tokenPoolProxy);
   }
@@ -106,7 +105,7 @@ abstract contract GhoBaseTest is BaseTest {
     // Deploy BurnMintTokenPool for GHO token on source chain
     UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(ghoToken, arm, false);
     // proxy upgrade
-    vm.startPrank(proxyAdmin);
+    vm.prank(proxyAdmin);
     TransparentUpgradeableProxy(tokenPoolProxy).upgradeTo(address(tokenPoolImpl));
   }
 
