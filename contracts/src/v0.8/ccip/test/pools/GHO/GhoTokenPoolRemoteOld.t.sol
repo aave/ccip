@@ -241,6 +241,12 @@ contract GhoTokenPoolOldEthereum_upgradeability is GhoTokenPoolRemoteSetupOld {
 
     assertEq(_getProxyAdminAddress(address(s_pool)), PROXY_ADMIN, "Unauthorized admin change");
   }
+
+  function testCallInitReverts() public {
+    vm.startPrank(OWNER);
+    vm.expectRevert("Initializable: contract is already initialized");
+    s_pool.initialize(OWNER, new address[](0), address(s_sourceRouter));
+  }
 }
 
 contract GhoTokenPoolRemoteOld_setChainRateLimiterConfig is GhoTokenPoolRemoteSetupOld {
