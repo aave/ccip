@@ -76,7 +76,6 @@ contract GhoTokenPoolRemoteSetupV2 is RouterSetup, GhoBaseTest {
     );
 
     // Give mint and burn privileges to source UpgradeableTokenPool (GHO-specific related)
-    vm.stopPrank();
     vm.startPrank(AAVE_DAO);
     GhoToken(address(s_burnMintERC677)).grantRole(
       GhoToken(address(s_burnMintERC677)).FACILITATOR_MANAGER_ROLE(),
@@ -99,8 +98,7 @@ contract GhoTokenPoolRemoteSetupV2 is RouterSetup, GhoBaseTest {
 
     vm.startPrank(AAVE_DAO);
     UpgradeableBurnMintTokenPool(pool).applyChainUpdates(chains);
-    vm.stopPrank();
-    vm.startPrank(OWNER);
+    changePrank(OWNER);
 
     Router.OnRamp[] memory onRampUpdates = new Router.OnRamp[](1);
     onRampUpdates[0] = Router.OnRamp({destChainSelector: DEST_CHAIN_SELECTOR, onRamp: s_burnMintOnRamp});
