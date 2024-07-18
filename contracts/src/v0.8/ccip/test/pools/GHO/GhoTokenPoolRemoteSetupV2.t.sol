@@ -50,8 +50,6 @@ contract GhoTokenPoolRemoteSetupV2 is RouterSetup, GhoBaseTest {
       PROXY_ADMIN
     );
 
-    s_pool = UpgradeableBurnMintTokenPoolV2(address(s_pool));
-
     // Give mint and burn privileges to source UpgradeableTokenPool (GHO-specific related)
     vm.startPrank(AAVE_DAO);
     GhoToken(address(s_burnMintERC677)).grantRole(
