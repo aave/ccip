@@ -13,7 +13,7 @@ jobs:
         product: [ccip]
     name: Foundry Tests ${{ matrix.product }}
     # See https://github.com/foundry-rs/foundry/issues/3827
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     # The if statements for steps after checkout repo is workaround for
     # passing required check for PRs that don't have filtered changes.
