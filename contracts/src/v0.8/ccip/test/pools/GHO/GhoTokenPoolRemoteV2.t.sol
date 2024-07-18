@@ -11,10 +11,11 @@ import {EVM2EVMOnRamp} from "../../../onRamp/EVM2EVMOnRamp.sol";
 import {EVM2EVMOffRamp} from "../../../offRamp/EVM2EVMOffRamp.sol";
 import {BurnMintTokenPool} from "../../../pools/BurnMintTokenPool.sol";
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableBurnMintTokenPoolV2} from "../../../pools/GHO/UpgradeableBurnMintTokenPoolV2.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
-import {GhoTokenPoolRemoteSetupOld} from "./GhoTokenPoolRemoteSetupOld.t.sol";
+import {GhoTokenPoolRemoteSetupV2} from "./GhoTokenPoolRemoteSetupV2.t.sol";
 
-contract GhoTokenPoolRemoteOld_lockOrBurn is GhoTokenPoolRemoteSetupOld {
+contract GhoTokenPoolRemoteV2_lockOrBurn is GhoTokenPoolRemoteSetupV2 {
   function testSetupSuccess() public {
     assertEq(address(s_burnMintERC677), address(s_pool.getToken()));
     assertEq(address(s_mockARM), s_pool.getArmProxy());
@@ -112,7 +113,7 @@ contract GhoTokenPoolRemoteOld_lockOrBurn is GhoTokenPoolRemoteSetupOld {
   }
 }
 
-contract GhoTokenPoolRemoteOld_releaseOrMint is GhoTokenPoolRemoteSetupOld {
+contract GhoTokenPoolRemoteV2_releaseOrMint is GhoTokenPoolRemoteSetupV2 {
   function testPoolMintSuccess() public {
     uint256 amount = 1e19;
     vm.startPrank(s_burnMintOffRamp);
@@ -179,7 +180,7 @@ contract GhoTokenPoolRemoteOld_releaseOrMint is GhoTokenPoolRemoteSetupOld {
   }
 }
 
-contract GhoTokenPoolOldEthereum_upgradeability is GhoTokenPoolRemoteSetupOld {
+contract GhoTokenPoolV2Ethereum_upgradeability is GhoTokenPoolRemoteSetupV2 {
   function testInitialization() public {
     // Upgradeability
     assertEq(_getUpgradeableVersion(address(s_pool)), 1);
@@ -249,7 +250,7 @@ contract GhoTokenPoolOldEthereum_upgradeability is GhoTokenPoolRemoteSetupOld {
   }
 }
 
-contract GhoTokenPoolRemoteOld_setChainRateLimiterConfig is GhoTokenPoolRemoteSetupOld {
+contract GhoTokenPoolRemoteV2_setChainRateLimiterConfig is GhoTokenPoolRemoteSetupV2 {
   event ConfigChanged(RateLimiter.Config);
   event ChainConfigured(
     uint64 chainSelector,
@@ -260,7 +261,7 @@ contract GhoTokenPoolRemoteOld_setChainRateLimiterConfig is GhoTokenPoolRemoteSe
   uint64 internal s_remoteChainSelector;
 
   function setUp() public virtual override {
-    GhoTokenPoolRemoteSetupOld.setUp();
+    GhoTokenPoolRemoteSetupV2.setUp();
     UpgradeableTokenPool.ChainUpdate[] memory chainUpdates = new UpgradeableTokenPool.ChainUpdate[](1);
     s_remoteChainSelector = 123124;
     chainUpdates[0] = UpgradeableTokenPool.ChainUpdate({
@@ -348,7 +349,7 @@ contract GhoTokenPoolRemoteOld_setChainRateLimiterConfig is GhoTokenPoolRemoteSe
   function testOnlyOwnerReverts() public {
     changePrank(STRANGER);
 
-    vm.expectRevert(abi.encodeWithSelector(UpgradeableBurnMintTokenPool.Unauthorized.selector, STRANGER));
+    vm.expectRevert(abi.encodeWithSelector(UpgradeableBurnMintTokenPoolV2.Unauthorized.selector, STRANGER));
     s_pool.setChainRateLimiterConfig(
       s_remoteChainSelector,
       getOutboundRateLimiterConfig(),
@@ -365,7 +366,7 @@ contract GhoTokenPoolRemoteOld_setChainRateLimiterConfig is GhoTokenPoolRemoteSe
   }
 }
 
-contract GhoTokenPoolRemoteOld_setRateLimitAdmin is GhoTokenPoolRemoteSetupOld {
+contract GhoTokenPoolRemoteV2_setRateLimitAdmin is GhoTokenPoolRemoteSetupV2 {
   function testSetRateLimitAdminSuccess() public {
     assertEq(address(0), s_pool.getRateLimitAdmin());
     vm.startPrank(AAVE_DAO);

@@ -8,13 +8,13 @@ import {stdError} from "forge-std/Test.sol";
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {Router} from "../../../Router.sol";
 import {BurnMintERC677} from "../../../../shared/token/ERC677/BurnMintERC677.sol";
-import {UpgradeableBurnMintTokenPoolOld} from "../../../pools/GHO/UpgradeableBurnMintTokenPoolOld.sol";
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableBurnMintTokenPoolV2} from "../../../pools/GHO/UpgradeableBurnMintTokenPoolV2.sol";
 import {RouterSetup} from "../../router/RouterSetup.t.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
 import {GhoBaseTest} from "./GhoBaseTest.t.sol";
 
-contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
+contract GhoTokenPoolRemoteSetupV2 is RouterSetup, GhoBaseTest {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event TokensConsumed(uint256 tokens);
   event Burned(address indexed sender, uint256 amount);
@@ -23,7 +23,7 @@ contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
   address internal s_burnMintOffRamp = makeAddr("burn_mint_offRamp");
   address internal s_burnMintOnRamp = makeAddr("burn_mint_onRamp");
 
-  UpgradeableBurnMintTokenPool internal s_pool;
+  UpgradeableBurnMintTokenPoolV2 internal s_pool;
 
   function setUp() public virtual override(RouterSetup, BaseTest) {
     RouterSetup.setUp();
@@ -32,8 +32,8 @@ contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
     GhoToken ghoToken = new GhoToken(AAVE_DAO);
     s_burnMintERC677 = BurnMintERC677(address(ghoToken));
 
-    s_pool = UpgradeableBurnMintTokenPool(
-      _deployUpgradeableBurnMintTokenPoolOld(
+    s_pool = UpgradeableBurnMintTokenPoolV2(
+      _deployUpgradeableBurnMintTokenPool(
         address(s_burnMintERC677),
         address(s_mockARM),
         address(s_sourceRouter),
@@ -50,6 +50,8 @@ contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
       PROXY_ADMIN
     );
 
+    s_pool = UpgradeableBurnMintTokenPoolV2(address(s_pool));
+
     // Give mint and burn privileges to source UpgradeableTokenPool (GHO-specific related)
     vm.startPrank(AAVE_DAO);
     GhoToken(address(s_burnMintERC677)).grantRole(
@@ -63,8 +65,8 @@ contract GhoTokenPoolRemoteSetupOld is RouterSetup, GhoBaseTest {
   }
 
   function _deployWithoutUpgrade() internal {
-    s_pool = UpgradeableBurnMintTokenPool(
-      _deployUpgradeableBurnMintTokenPoolOld(
+    s_pool = UpgradeableBurnMintTokenPoolV2(
+      _deployUpgradeableBurnMintTokenPool(
         address(s_burnMintERC677),
         address(s_mockARM),
         address(s_sourceRouter),
