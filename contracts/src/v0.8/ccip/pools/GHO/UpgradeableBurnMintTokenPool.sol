@@ -23,12 +23,28 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
 
   string public constant override typeAndVersion = "BurnMintTokenPool 1.4.0";
 
+  /// @dev The unique burn mint pool flag to signal through EIP 165.
+  bytes4 private constant BURN_MINT_INTERFACE_ID = bytes4(keccak256("BurnMintTokenPool"));
+
+  /// @dev Whether or not the pool accepts liquidity.
+  /// External liquidity is not required when there is one canonical token deployed to a chain,
+  /// and CCIP is facilitating mint/burn on all the other chains, in which case the invariant
+  /// balanceOf(pool) on home chain == sum(totalSupply(mint/burn "wrapped" token) on all remote chains) should always hold
+  bool internal immutable i_acceptLiquidity;
+  /// @notice The address of the rebalancer.
+  address internal s_rebalancer;
   /// @notice The address of the rate limiter admin.
   /// @dev Can be address(0) if none is configured.
   address internal s_rateLimitAdmin;
 
-  // Reserved storage space to allow for layout changes in the future.
-  uint256[50] private __gap;
+  /// @notice Maximum amount of tokens that can be bridged to other chains
+  uint256 private s_bridgeLimit;
+  /// @notice Amount of tokens bridged (transferred out)
+  /// @dev Must always be equal to or below the bridge limit
+  uint256 private s_currentBridged;
+  /// @notice The address of the bridge limit admin.
+  /// @dev Can be address(0) if none is configured.
+  address internal s_bridgeLimitAdmin;
 
   /// @dev Constructor
   /// @param token The bridgeable token that is managed by this pool.
@@ -37,8 +53,11 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   constructor(
     address token,
     address armProxy,
-    bool allowlistEnabled
-  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
+    bool allowlistEnabled,
+    bool acceptLiquidity
+  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {
+    i_acceptLiquidity = acceptLiquidity;
+  }
 
   /// @dev Initializer
   /// @dev The address passed as `owner` must accept ownership after initialization.
