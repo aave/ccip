@@ -8,6 +8,7 @@ import {IBurnMintERC20} from "../../../../shared/token/ERC20/IBurnMintERC20.sol"
 import {IPool} from "../../../interfaces/pools/IPool.sol";
 import {UpgradeableLockReleaseTokenPool} from "../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
 import {UpgradeableBurnMintTokenPool} from "../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableBurnMintTokenPoolOld} from "../../../pools/GHO/UpgradeableBurnMintTokenPoolOld.sol";
 import {UpgradeableTokenPool} from "../../../pools/GHO/UpgradeableTokenPool.sol";
 import {RateLimiter} from "../../../libraries/RateLimiter.sol";
 import {BaseTest} from "../../BaseTest.t.sol";
@@ -61,6 +62,36 @@ abstract contract GhoBaseTest is BaseTest {
     vm.prank(owner);
     UpgradeableBurnMintTokenPool(address(tokenPoolProxy)).acceptOwnership();
     vm.startPrank(OWNER);
+
+    return address(tokenPoolProxy);
+  }
+
+  function _deployUpgradeableBurnMintTokenPoolOld(
+    address ghoToken,
+    address arm,
+    address router,
+    address owner,
+    address proxyAdmin
+  ) internal returns (address) {
+    // Deploy BurnMintTokenPool for GHO token on source chain
+    UpgradeableBurnMintTokenPoolOld tokenPoolImpl = new UpgradeableBurnMintTokenPoolOld(ghoToken, arm, false);
+    // proxy deploy and init
+    address[] memory emptyArray = new address[](0);
+    bytes memory tokenPoolInitParams = abi.encodeWithSignature(
+      "initialize(address,address[],address)",
+      owner,
+      emptyArray,
+      router
+    );
+    TransparentUpgradeableProxy tokenPoolProxy = new TransparentUpgradeableProxy(
+      address(tokenPoolImpl),
+      proxyAdmin,
+      tokenPoolInitParams
+    );
+    // Manage ownership
+    changePrank(owner);
+    UpgradeableBurnMintTokenPoolOld(address(tokenPoolProxy)).acceptOwnership();
+    vm.stopPrank();
 
     return address(tokenPoolProxy);
   }
