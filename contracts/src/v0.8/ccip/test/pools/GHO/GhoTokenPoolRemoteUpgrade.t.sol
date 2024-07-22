@@ -9,13 +9,15 @@ import {GhoTokenPoolRemoteSetup} from "./GhoTokenPoolRemoteSetup.t.sol";
 contract GhoTokenPoolRemoteUpgrade is GhoTokenPoolRemoteSetup {
   // Unable to call setRateLimitAdmin() before upgrade
   function testSetRateLimitAdminRevertsBeforeUpgrade() public {
-    s_pool = UpgradeableBurnMintTokenPool(_deployUpgradeableBurnMintTokenPoolOld(
+    s_pool = UpgradeableBurnMintTokenPool(
+      _deployUpgradeableBurnMintTokenPoolOld(
         address(s_burnMintERC677),
         address(s_mockARM),
         address(s_sourceRouter),
-        AAVE_DAO, 
+        AAVE_DAO,
         PROXY_ADMIN
-    ));
+      )
+    );
     vm.prank(AAVE_DAO);
     vm.expectRevert();
     s_pool.setRateLimitAdmin(AAVE_DAO);
@@ -24,16 +26,22 @@ contract GhoTokenPoolRemoteUpgrade is GhoTokenPoolRemoteSetup {
   // Able to call setRateLimitAdmin() after upgrade
   function testUpgradeAndSetRateLimitAdmin() public {
     // Assume existing remote pool as is deployed
-    s_pool = UpgradeableBurnMintTokenPool(_deployUpgradeableBurnMintTokenPoolOld(
+    s_pool = UpgradeableBurnMintTokenPool(
+      _deployUpgradeableBurnMintTokenPoolOld(
         address(s_burnMintERC677),
         address(s_mockARM),
         address(s_sourceRouter),
-        AAVE_DAO, 
+        AAVE_DAO,
         PROXY_ADMIN
-    ));
-    
+      )
+    );
+
     // Deploy new implementation
-    UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(address(s_burnMintERC677), address(s_mockARM), false);
+    UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(
+      address(s_burnMintERC677),
+      address(s_mockARM),
+      false
+    );
     // Do the upgrade
     vm.prank(PROXY_ADMIN);
     TransparentUpgradeableProxy(payable(address(s_pool))).upgradeTo(address(tokenPoolImpl));
@@ -46,16 +54,22 @@ contract GhoTokenPoolRemoteUpgrade is GhoTokenPoolRemoteSetup {
 
   // Unable to call initialize() on proxy after upgrade
   function testInitializeRevertsAfterUpgrade() public {
-    s_pool = UpgradeableBurnMintTokenPool(_deployUpgradeableBurnMintTokenPoolOld(
+    s_pool = UpgradeableBurnMintTokenPool(
+      _deployUpgradeableBurnMintTokenPoolOld(
         address(s_burnMintERC677),
         address(s_mockARM),
         address(s_sourceRouter),
-        AAVE_DAO, 
+        AAVE_DAO,
         PROXY_ADMIN
-    ));
+      )
+    );
 
     // Deploy new implementation
-    UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(address(s_burnMintERC677), address(s_mockARM), false);
+    UpgradeableBurnMintTokenPool tokenPoolImpl = new UpgradeableBurnMintTokenPool(
+      address(s_burnMintERC677),
+      address(s_mockARM),
+      false
+    );
     // Do the upgrade
     vm.prank(PROXY_ADMIN);
     TransparentUpgradeableProxy(payable(address(s_pool))).upgradeTo(address(tokenPoolImpl));
