@@ -18,6 +18,7 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// @dev Contract adaptations:
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
+/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
 contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
   error Unauthorized(address caller);
 
@@ -68,7 +69,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     return s_rateLimitAdmin;
   }
 
-  /// @notice Sets the rate limiter admin address.
+  /// @notice Sets the chain rate limiter config.
   /// @dev Only callable by the owner or the rate limiter admin. NOTE: overwrites the normal
   /// onlyAdmin check in the base implementation to also allow the rate limiter admin.
   /// @param remoteChainSelector The remote chain selector for which the rate limits apply.
