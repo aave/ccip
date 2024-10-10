@@ -376,3 +376,42 @@ contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
     s_pool.setRateLimitAdmin(STRANGER);
   }
 }
+
+contract GhoTokenPoolRemote_legacyOnRamp is GhoTokenPoolRemoteSetup {
+  function testSetLegacyOnRampAdminReverts() public {
+    vm.startPrank(STRANGER);
+    vm.expectRevert("Only callable by owner");
+    s_pool.setLegacyOnRamp(DEST_CHAIN_SELECTOR, makeAddr("legacyOnRamp"));
+  }
+
+  function testSetLegacyOnRampInvalidChainReverts(uint64 nonExistentChainSelector) public {
+    vm.assume(nonExistentChainSelector != DEST_CHAIN_SELECTOR);
+    changePrank(AAVE_DAO);
+    vm.expectRevert(abi.encodeWithSelector(UpgradeableTokenPool.ChainNotAllowed.selector, nonExistentChainSelector));
+    s_pool.setLegacyOnRamp(nonExistentChainSelector, makeAddr("legacyOnRamp"));
+  }
+
+  function testSetLegacyOnRampSuccess(address legacyOnRamp) public {
+    changePrank(AAVE_DAO);
+    s_pool.setLegacyOnRamp(DEST_CHAIN_SELECTOR, legacyOnRamp);
+
+    assertEq(s_pool.getLegacyOnRamp(DEST_CHAIN_SELECTOR), legacyOnRamp);
+  }
+
+  function testFuzzGetLegacyOnRamp(uint64 chainSelector, address legacyOnRamp) public {
+    vm.assume(chainSelector != DEST_CHAIN_SELECTOR);
+    UpgradeableTokenPool.ChainUpdate[] memory chains = new UpgradeableTokenPool.ChainUpdate[](1);
+    chains[0] = UpgradeableTokenPool.ChainUpdate({
+      remoteChainSelector: chainSelector,
+      allowed: true,
+      outboundRateLimiterConfig: getOutboundRateLimiterConfig(),
+      inboundRateLimiterConfig: getInboundRateLimiterConfig()
+    });
+
+    changePrank(AAVE_DAO);
+    s_pool.applyChainUpdates(chains); // more robust than modifying `s_remoteChainSelectors` set storage
+    s_pool.setLegacyOnRamp(chainSelector, legacyOnRamp);
+
+    assertEq(s_pool.getLegacyOnRamp(chainSelector), legacyOnRamp);
+  }
+}
