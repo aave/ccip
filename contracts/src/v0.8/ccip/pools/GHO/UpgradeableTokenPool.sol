@@ -55,11 +55,12 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
     RateLimiter.Config inboundRateLimiterConfig; // Inbound rate limited config, meaning the rate limits for all of the offRamps for the given chain
   }
 
-  /// @dev The storage slot for the legacy onRamp address.
+  /// @dev The storage slot for Proxy Pool address, act as an on ramp "wrapper" post ccip 1.5 migration.
   /// @dev This was added to continue support for 1.2 onRamp during 1.5 migration, and is stored
   /// this way to avoid storage collision.
-  bytes32 internal constant LEGACY_ON_RAMP_STORAGE_SLOT =
-    0x1502550b48234eae00e6e40fbe138bacb20fb810a4e848e89695d938ac3530a6; // bytes32(uint256(keccak256("ccip.pools.GHO.UpgradeableTokenPool.legacyOnRamp")) - 1)
+  // bytes32(uint256(keccak256("ccip.pools.GHO.UpgradeableTokenPool.proxyPool")) - 1)
+  bytes32 internal constant PROXY_POOL_SLOT = 0x75bb68f1b335d4dab6963140ecff58281174ef4362bb85a8593ab9379f24fae2;
+
   /// @dev The bridgeable token that is managed by this pool.
   IERC20 internal immutable i_token;
   /// @dev The address of the arm proxy
@@ -255,7 +256,7 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   /// is a permissioned onRamp for the given chain on the Router.
   modifier onlyOnRamp(uint64 remoteChainSelector) {
     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
-    if (msg.sender != s_router.getOnRamp(remoteChainSelector) && msg.sender != getLegacyOnRamp(remoteChainSelector))
+    if (msg.sender != s_router.getOnRamp(remoteChainSelector) && msg.sender != getProxyPool(remoteChainSelector))
       revert CallerIsNotARampOnRouter(msg.sender);
     _;
   }
@@ -324,27 +325,27 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
     _;
   }
 
-  /// @notice Getter for legacy onRamp address.
-  /// @param remoteChainSelector The remote chain selector for which the legacy onRamp is being retrieved.
-  /// @return legacyOnRamp The legacy onRamp address for the given remoteChainSelector
-  function getLegacyOnRamp(uint64 remoteChainSelector) public view returns (address legacyOnRamp) {
+  /// @notice Getter for proxy pool address.
+  /// @param remoteChainSelector The remote chain selector for which the proxy pool is being retrieved.
+  /// @return proxyPool The proxy pool address for the given remoteChainSelector
+  function getProxyPool(uint64 remoteChainSelector) public view returns (address proxyPool) {
     assembly ("memory-safe") {
-      mstore(0, LEGACY_ON_RAMP_STORAGE_SLOT)
+      mstore(0, PROXY_POOL_SLOT)
       mstore(32, remoteChainSelector)
-      legacyOnRamp := shr(96, shl(96, sload(keccak256(0, 64))))
+      proxyPool := shr(96, shl(96, sload(keccak256(0, 64))))
     }
   }
 
-  /// @notice Setter for legacy onRamp address, only callable by the DAO.
-  /// @param remoteChainSelector The remote chain selector for which the legacy onRamp is being set.
-  /// @param legacyOnRamp The address of the legacy onRamp.
-  function setLegacyOnRamp(uint64 remoteChainSelector, address legacyOnRamp) external onlyOwner {
+  /// @notice Setter for proxy pool address, only callable by the DAO.
+  /// @param remoteChainSelector The remote chain selector for which the proxy pool is being set.
+  /// @param proxyPool The address of the proxy pool.
+  function setProxyPool(uint64 remoteChainSelector, address proxyPool) external onlyOwner {
     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
-    // todo: add check for typeAndVersion or getStaticConfig().destChainSelector on legacyOnRamp?
+    // todo: add check for typeAndVersion, immutable?
     assembly ("memory-safe") {
-      mstore(0, LEGACY_ON_RAMP_STORAGE_SLOT)
+      mstore(0, PROXY_POOL_SLOT)
       mstore(32, remoteChainSelector)
-      sstore(keccak256(0, 64), legacyOnRamp)
+      sstore(keccak256(0, 64), proxyPool)
     }
   }
 }

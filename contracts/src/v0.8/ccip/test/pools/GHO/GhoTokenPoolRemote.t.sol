@@ -377,28 +377,28 @@ contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
   }
 }
 
-contract GhoTokenPoolRemote_legacyOnRamp is GhoTokenPoolRemoteSetup {
-  function testSetLegacyOnRampAdminReverts() public {
+contract GhoTokenPoolRemote_proxyPool is GhoTokenPoolRemoteSetup {
+  function testSetProxyPoolAdminReverts() public {
     vm.startPrank(STRANGER);
     vm.expectRevert("Only callable by owner");
-    s_pool.setLegacyOnRamp(DEST_CHAIN_SELECTOR, makeAddr("legacyOnRamp"));
+    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, makeAddr("proxyPool"));
   }
 
-  function testSetLegacyOnRampInvalidChainReverts(uint64 nonExistentChainSelector) public {
+  function testSetProxyPoolInvalidChainReverts(uint64 nonExistentChainSelector) public {
     vm.assume(nonExistentChainSelector != DEST_CHAIN_SELECTOR);
     changePrank(AAVE_DAO);
     vm.expectRevert(abi.encodeWithSelector(UpgradeableTokenPool.ChainNotAllowed.selector, nonExistentChainSelector));
-    s_pool.setLegacyOnRamp(nonExistentChainSelector, makeAddr("legacyOnRamp"));
+    s_pool.setProxyPool(nonExistentChainSelector, makeAddr("proxyPool"));
   }
 
-  function testSetLegacyOnRampSuccess(address legacyOnRamp) public {
+  function testSetProxyPoolSuccess(address proxyPool) public {
     changePrank(AAVE_DAO);
-    s_pool.setLegacyOnRamp(DEST_CHAIN_SELECTOR, legacyOnRamp);
+    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, proxyPool);
 
-    assertEq(s_pool.getLegacyOnRamp(DEST_CHAIN_SELECTOR), legacyOnRamp);
+    assertEq(s_pool.getProxyPool(DEST_CHAIN_SELECTOR), proxyPool);
   }
 
-  function testFuzzGetLegacyOnRamp(uint64 chainSelector, address legacyOnRamp) public {
+  function testFuzzGetProxyPool(uint64 chainSelector, address proxyPool) public {
     vm.assume(chainSelector != DEST_CHAIN_SELECTOR);
     UpgradeableTokenPool.ChainUpdate[] memory chains = new UpgradeableTokenPool.ChainUpdate[](1);
     chains[0] = UpgradeableTokenPool.ChainUpdate({
@@ -410,8 +410,8 @@ contract GhoTokenPoolRemote_legacyOnRamp is GhoTokenPoolRemoteSetup {
 
     changePrank(AAVE_DAO);
     s_pool.applyChainUpdates(chains); // more robust than modifying `s_remoteChainSelectors` set storage
-    s_pool.setLegacyOnRamp(chainSelector, legacyOnRamp);
+    s_pool.setProxyPool(chainSelector, proxyPool);
 
-    assertEq(s_pool.getLegacyOnRamp(chainSelector), legacyOnRamp);
+    assertEq(s_pool.getProxyPool(chainSelector), proxyPool);
   }
 }
