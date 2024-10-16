@@ -255,7 +255,7 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   /// is a permissioned onRamp for the given chain on the Router.
   modifier onlyOnRamp(uint64 remoteChainSelector) {
     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
-    if (!(msg.sender == s_router.getOnRamp(remoteChainSelector) && msg.sender != getLegacyOnRamp(remoteChainSelector)))
+    if (msg.sender != s_router.getOnRamp(remoteChainSelector) && msg.sender != getLegacyOnRamp(remoteChainSelector))
       revert CallerIsNotARampOnRouter(msg.sender);
     _;
   }
