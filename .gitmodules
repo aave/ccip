@@ -1,0 +1,9 @@
+[submodule "contracts/foundry-lib/solidity-utils"]
+	path = contracts/foundry-lib/solidity-utils
+	url = https://github.com/bgd-labs/solidity-utils
+[submodule "contracts/foundry-lib/gho-core"]
+	path = contracts/foundry-lib/gho-core
+	url = https://github.com/aave/gho-core
+[submodule "contracts/foundry-lib/forge-std"]
+	path = contracts/foundry-lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
