@@ -3,29 +3,50 @@ pragma solidity 0.8.19;
 
 import {Test} from "forge-std/Test.sol";
 import {IERC20} from "../../../../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
-import {UpgradeableLockReleaseTokenPool} from "../../../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
-import {UpgradeableBurnMintTokenPool} from "../../../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableLockReleaseTokenPool_Sepolia} from "./LegacyTestnetTokenPools/UpgradeableLockReleaseTokenPool_Sepolia.sol";
+import {UpgradeableBurnMintTokenPool_ArbSepolia} from "./LegacyTestnetTokenPools/UpgradeableBurnMintTokenPool_ArbSepolia.sol";
 import {IRouterClient} from "../../../../../interfaces/IRouterClient.sol";
+import {IRouter as IRouterBase} from "../../../../../interfaces/IRouter.sol";
 import {Client} from "../../../../../libraries/Client.sol";
+import {Internal} from "../../../../../libraries/Internal.sol";
+import {ITypeAndVersion} from "../../../../../../shared/interfaces/ITypeAndVersion.sol";
+
+interface IRouter is IRouterClient, IRouterBase {
+  function getWrappedNative() external view returns (address);
+}
+
+struct SourceTokenData {
+  bytes sourcePoolAddress;
+  bytes destTokenAddress;
+  bytes extraData;
+  uint32 destGasAmount;
+}
 
 contract ForkBase is Test {
   error CallerIsNotARampOnRouter(address caller);
+  event CCIPSendRequested(Internal.EVM2EVMMessage message);
 
   struct L1 {
-    UpgradeableLockReleaseTokenPool tokenPool;
-    IRouterClient router;
+    UpgradeableLockReleaseTokenPool_Sepolia tokenPool;
+    IRouter router;
     IERC20 token;
+    address EVM2EVMOnRamp1_2;
+    address EVM2EVMOnRamp1_5;
     address proxyPool;
     uint64 chainSelector;
-    uint forkId;
+    bytes32 metadataHash;
+    uint256 forkId;
   }
   struct L2 {
-    UpgradeableBurnMintTokenPool tokenPool;
-    IRouterClient router;
+    UpgradeableBurnMintTokenPool_ArbSepolia tokenPool;
+    IRouter router;
     IERC20 token;
+    address EVM2EVMOnRamp1_2;
+    address EVM2EVMOnRamp1_5;
     address proxyPool;
     uint64 chainSelector;
-    uint forkId;
+    bytes32 metadataHash;
+    uint256 forkId;
   }
 
   L1 internal l1;
@@ -38,42 +59,124 @@ contract ForkBase is Test {
     l2.forkId = vm.createFork("https://arbitrum-sepolia.gateway.tenderly.co", 89058935);
 
     vm.selectFork(l1.forkId);
-    l1.tokenPool = UpgradeableLockReleaseTokenPool(0x7768248E1Ff75612c18324bad06bb393c1206980);
+    l1.tokenPool = UpgradeableLockReleaseTokenPool_Sepolia(0x7768248E1Ff75612c18324bad06bb393c1206980);
     l1.proxyPool = 0x14A3298f667CCB3ad4B77878d80b353f6A10F183;
-    l1.router = IRouterClient(l1.tokenPool.getRouter());
+    l1.router = IRouter(l1.tokenPool.getRouter());
     l2.chainSelector = l1.tokenPool.getSupportedChains()[0];
     l1.token = l1.tokenPool.getToken();
+    l1.EVM2EVMOnRamp1_2 = 0x1f41c443Cf68750d5c195E2EA7051521d981fC77; // legacy on ramp
+    l1.EVM2EVMOnRamp1_5 = l1.router.getOnRamp(l2.chainSelector);
     vm.prank(alice);
     l1.token.approve(address(l1.router), type(uint256).max);
     deal(address(l1.token), alice, 1000e18);
     deal(alice, 1000e18);
 
     vm.selectFork(l2.forkId);
-    l2.tokenPool = UpgradeableBurnMintTokenPool(0x3eC2b6F818B72442fc36561e9F930DD2b60957D2);
+    l2.tokenPool = UpgradeableBurnMintTokenPool_ArbSepolia(0x3eC2b6F818B72442fc36561e9F930DD2b60957D2);
     l2.proxyPool = 0x2BDbDCC0957E8d9f5Eb1Fe8E1Bc0d7F57AD1C897;
-    l2.router = IRouterClient(l2.tokenPool.getRouter());
+    l2.router = IRouter(l2.tokenPool.getRouter());
     l1.chainSelector = l2.tokenPool.getSupportedChains()[0];
     l2.token = l2.tokenPool.getToken();
+    l2.EVM2EVMOnRamp1_2 = 0xc1eBd046A4086142479bE3Fc16A4791E2022909a; // legacy on ramp
+    l2.EVM2EVMOnRamp1_5 = l2.router.getOnRamp(l1.chainSelector);
     vm.prank(alice);
     l2.token.approve(address(l2.router), type(uint256).max);
     deal(address(l2.token), alice, 1000e18);
     deal(alice, 1000e18);
 
+    l1.metadataHash = _generateMetadataHash(l1.chainSelector);
+    l2.metadataHash = _generateMetadataHash(l2.chainSelector);
+
     vm.selectFork(l1.forkId);
-    assertEq(address(l1.router), 0x0BF3dE8c5D3e8A2B34D2BEeB17ABfCeBaf363A59);
     assertEq(l1.chainSelector, 16015286601757825753);
     assertEq(address(l1.token), 0xc4bF5CbDaBE595361438F8c6a187bDc330539c60);
     assertEq(l1.token.balanceOf(alice), 1000e18);
-    assertEq(l1.proxyPool, 0x14A3298f667CCB3ad4B77878d80b353f6A10F183);
+    assertEq(ITypeAndVersion(address(l1.router)).typeAndVersion(), "Router 1.2.0");
+    assertEq(ITypeAndVersion(l1.proxyPool).typeAndVersion(), "LockReleaseTokenPoolAndProxy 1.5.0");
+    assertEq(ITypeAndVersion(l1.EVM2EVMOnRamp1_2).typeAndVersion(), "EVM2EVMOnRamp 1.2.0");
+    assertEq(ITypeAndVersion(l1.EVM2EVMOnRamp1_5).typeAndVersion(), "EVM2EVMOnRamp 1.5.0");
 
     vm.selectFork(l2.forkId);
-    assertEq(address(l2.router), 0x2a9C5afB0d0e4BAb2BCdaE109EC4b0c4Be15a165);
     assertEq(l2.chainSelector, 3478487238524512106);
     assertEq(address(l2.token), 0xb13Cfa6f8B2Eed2C37fB00fF0c1A59807C585810);
     assertEq(l2.token.balanceOf(alice), 1000e18);
-    assertEq(l2.proxyPool, 0x2BDbDCC0957E8d9f5Eb1Fe8E1Bc0d7F57AD1C897);
+    assertEq(ITypeAndVersion(address(l2.router)).typeAndVersion(), "Router 1.2.0");
+    assertEq(ITypeAndVersion(l2.proxyPool).typeAndVersion(), "BurnMintTokenPoolAndProxy 1.5.0");
+    assertEq(ITypeAndVersion(l2.EVM2EVMOnRamp1_2).typeAndVersion(), "EVM2EVMOnRamp 1.2.0");
+    assertEq(ITypeAndVersion(l2.EVM2EVMOnRamp1_5).typeAndVersion(), "EVM2EVMOnRamp 1.5.0");
 
     _label();
+  }
+
+  function _generateMessage(
+    address receiver,
+    uint256 tokenAmountsLength
+  ) internal view returns (Client.EVM2AnyMessage memory) {
+    return
+      Client.EVM2AnyMessage({
+        receiver: abi.encode(receiver),
+        data: "",
+        tokenAmounts: new Client.EVMTokenAmount[](tokenAmountsLength),
+        feeToken: address(0),
+        extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0}))
+      });
+  }
+
+  function _messageToEvent(
+    Client.EVM2AnyMessage memory message,
+    uint64 seqNum,
+    uint64 nonce,
+    uint256 feeTokenAmount,
+    address originalSender,
+    bytes32 metadataHash,
+    uint32 destGasAmount
+  ) public view returns (Internal.EVM2EVMMessage memory) {
+    address feeToken = metadataHash == l1.metadataHash ? l1.router.getWrappedNative() : l2.router.getWrappedNative();
+    address destTokenAddress = metadataHash == l1.metadataHash ? address(l2.token) : address(l1.token);
+    address sourcePool = metadataHash == l1.metadataHash ? l1.proxyPool : l2.proxyPool;
+
+    // Slicing is only available for calldata. So we have to build a new bytes array.
+    bytes memory args = new bytes(message.extraArgs.length - 4);
+    for (uint256 i = 4; i < message.extraArgs.length; ++i) {
+      args[i - 4] = message.extraArgs[i];
+    }
+    Client.EVMExtraArgsV1 memory extraArgs = abi.decode(args, (Client.EVMExtraArgsV1));
+    Internal.EVM2EVMMessage memory messageEvent = Internal.EVM2EVMMessage({
+      sequenceNumber: seqNum,
+      feeTokenAmount: feeTokenAmount,
+      sender: originalSender,
+      nonce: nonce,
+      gasLimit: extraArgs.gasLimit,
+      strict: false,
+      sourceChainSelector: l1.chainSelector,
+      receiver: abi.decode(message.receiver, (address)),
+      data: message.data,
+      tokenAmounts: message.tokenAmounts,
+      sourceTokenData: new bytes[](message.tokenAmounts.length),
+      feeToken: feeToken,
+      messageId: ""
+    });
+
+    for (uint256 i; i < message.tokenAmounts.length; ++i) {
+      // change introduced in 1.5 upgrade
+      messageEvent.sourceTokenData[i] = abi.encode(
+        SourceTokenData({
+          sourcePoolAddress: abi.encode(sourcePool),
+          destTokenAddress: abi.encode(destTokenAddress),
+          extraData: "",
+          destGasAmount: destGasAmount
+        })
+      );
+    }
+
+    messageEvent.messageId = Internal._hash(messageEvent, metadataHash);
+    return messageEvent;
+  }
+
+  function _generateMetadataHash(uint64 sourceChainSelector) internal view returns (bytes32) {
+    uint64 destChainSelector = sourceChainSelector == l1.chainSelector ? l2.chainSelector : l1.chainSelector;
+    address onRamp = sourceChainSelector == l1.chainSelector ? l1.EVM2EVMOnRamp1_5 : l2.EVM2EVMOnRamp1_5;
+    return keccak256(abi.encode(Internal.EVM_2_EVM_MESSAGE_HASH, sourceChainSelector, destChainSelector, onRamp));
   }
 
   function _selectForkAndStartPrank(uint forkId) internal {
@@ -86,28 +189,26 @@ contract ForkBase is Test {
     vm.label(address(l1.token), "l1.token");
     vm.label(address(l1.router), "l1.router");
     vm.label(address(l1.proxyPool), "l1.proxyPool");
+    vm.label(address(l1.EVM2EVMOnRamp1_2), "l1.EVM2EVMOnRamp1_2");
+    vm.label(address(l1.EVM2EVMOnRamp1_5), "l1.EVM2EVMOnRamp1_5");
 
     vm.label(address(l2.tokenPool), "l2.tokenPool");
     vm.label(address(l2.token), "l2.token");
     vm.label(address(l2.router), "l2.router");
     vm.label(address(l2.proxyPool), "l2.proxyPool");
+    vm.label(address(l2.EVM2EVMOnRamp1_2), "l2.EVM2EVMOnRamp1_2");
+    vm.label(address(l2.EVM2EVMOnRamp1_5), "l2.EVM2EVMOnRamp1_5");
   }
 }
 
-contract ForkBaseTest is ForkBase {
+contract ForkPoolAfterMigration is ForkBase {
   function setUp() public override {
     super.setUp();
   }
 
-  function test_currentSetupBroken() public {
+  function test_RevertSendLegacyPool() public {
     uint256 amount = 10e18;
-    Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-      receiver: abi.encode(alice),
-      data: new bytes(0),
-      tokenAmounts: new Client.EVMTokenAmount[](1),
-      feeToken: address(0), // will be paying in native tokens for tests
-      extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0}))
-    });
+    Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
     message.tokenAmounts[0].token = address(l1.token);
     message.tokenAmounts[0].amount = amount;
 

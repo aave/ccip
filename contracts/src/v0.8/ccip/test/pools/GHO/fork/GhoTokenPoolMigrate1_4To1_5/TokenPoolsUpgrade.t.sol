@@ -2,44 +2,52 @@
 pragma solidity 0.8.19;
 
 import {ForkBase} from "./ForkBase.t.sol";
-import {UpgradeableLockReleaseTokenPool} from "../../../../../pools/GHO/UpgradeableLockReleaseTokenPool.sol";
-import {UpgradeableBurnMintTokenPool} from "../../../../../pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {UpgradeableLockReleaseTokenPool_Sepolia} from "./LegacyTestnetTokenPools/UpgradeableLockReleaseTokenPool_Sepolia.sol";
+import {UpgradeableBurnMintTokenPool_ArbSepolia} from "./LegacyTestnetTokenPools/UpgradeableBurnMintTokenPool_ArbSepolia.sol";
 import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
 import {ProxyAdmin} from "solidity-utils/contracts/transparent-proxy/ProxyAdmin.sol";
 import {Client} from "../../../../../libraries/Client.sol";
+import {Internal} from "../../../../../libraries/Internal.sol";
 
-contract ForkTokenPoolsUpgrade is ForkBase {
+contract ForkPoolUpgradeAfterMigration is ForkBase {
   function setUp() public override {
     super.setUp();
 
+    // #1: deploy new implementation & upgrade token pools
+    vm.selectFork(l1.forkId);
     _upgradeExistingLockReleaseTokenPool();
+
+    vm.selectFork(l2.forkId);
     _upgradeExistingBurnMintTokenPool();
+
+    // #2: update legacyOnRamp
+    vm.selectFork(l1.forkId);
+    vm.prank(l1.tokenPool.owner());
+    l1.tokenPool.setLegacyOnRamp(l2.chainSelector, l1.proxyPool);
+
+    vm.selectFork(l2.forkId);
+    vm.prank(l2.tokenPool.owner());
+    l2.tokenPool.setLegacyOnRamp(l1.chainSelector, l2.proxyPool);
   }
 
-  function test_upgrade() public {
+  function test_sendAndReceiveFromL1() public {
     vm.selectFork(l1.forkId);
 
     uint256 amount = 10e18;
-    Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-      receiver: abi.encode(alice),
-      data: new bytes(0),
-      tokenAmounts: new Client.EVMTokenAmount[](1),
-      feeToken: address(0), // will be paying in native tokens for tests
-      extraArgs: Client._argsToBytes(Client.EVMExtraArgsV1({gasLimit: 0}))
-    });
+    Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
     message.tokenAmounts[0].token = address(l1.token);
     message.tokenAmounts[0].amount = amount;
 
     uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
 
+    vm.expectEmit();
+    emit CCIPSendRequested(_messageToEvent(message, 220, 1, feeTokenAmount, alice, l1.metadataHash, uint32(90000)));
     vm.prank(alice);
-    vm.expectRevert(abi.encodeWithSelector(CallerIsNotARampOnRouter.selector, l1.proxyPool));
     l1.router.ccipSend{value: feeTokenAmount}(l2.chainSelector, message);
   }
 
   function _upgradeExistingLockReleaseTokenPool() internal {
-    vm.selectFork(l1.forkId);
-    UpgradeableLockReleaseTokenPool poolImpl = new UpgradeableLockReleaseTokenPool(
+    UpgradeableLockReleaseTokenPool_Sepolia poolImpl = new UpgradeableLockReleaseTokenPool_Sepolia(
       address(l1.token),
       l1.tokenPool.getArmProxy(),
       l1.tokenPool.getAllowListEnabled(),
@@ -49,8 +57,7 @@ contract ForkTokenPoolsUpgrade is ForkBase {
   }
 
   function _upgradeExistingBurnMintTokenPool() internal {
-    vm.selectFork(l2.forkId);
-    UpgradeableBurnMintTokenPool poolImpl = new UpgradeableBurnMintTokenPool(
+    UpgradeableBurnMintTokenPool_ArbSepolia poolImpl = new UpgradeableBurnMintTokenPool_ArbSepolia(
       address(l2.token),
       l2.tokenPool.getArmProxy(),
       l2.tokenPool.getAllowListEnabled()
