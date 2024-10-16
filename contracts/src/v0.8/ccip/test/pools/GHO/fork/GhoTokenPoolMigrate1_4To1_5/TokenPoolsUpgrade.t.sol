@@ -30,13 +30,12 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
     l2.tokenPool.setLegacyOnRamp(l1.chainSelector, l2.proxyPool);
   }
 
-  function test_sendAndReceiveFromL1() public {
+  function test_sendFromLegacyRouterL1() public {
     vm.selectFork(l1.forkId);
 
     uint256 amount = 10e18;
     Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
-    message.tokenAmounts[0].token = address(l1.token);
-    message.tokenAmounts[0].amount = amount;
+    message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l1.token), amount: amount});
 
     uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
 
@@ -44,6 +43,46 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
     emit CCIPSendRequested(_messageToEvent(message, 220, 1, feeTokenAmount, alice, l1.metadataHash, uint32(90000)));
     vm.prank(alice);
     l1.router.ccipSend{value: feeTokenAmount}(l2.chainSelector, message);
+  }
+
+  function test_releaseOrMintFrom1_2OffRamp() public {
+    uint256 amount = 10e18;
+    {
+      vm.selectFork(l1.forkId);
+      uint256 balanceBefore = l1.token.balanceOf(alice);
+      // mock release on legacy offramp
+      vm.prank(l1.EVM2EVMOffRamp1_2);
+      l1.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l2.chainSelector, "");
+      assertEq(l1.token.balanceOf(alice), balanceBefore + amount);
+    }
+    {
+      vm.selectFork(l2.forkId);
+      uint256 balanceBefore = l2.token.balanceOf(alice);
+      // mock release on legacy offramp
+      vm.prank(l2.EVM2EVMOffRamp1_2);
+      l2.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l1.chainSelector, "");
+      assertEq(l2.token.balanceOf(alice), balanceBefore + amount);
+    }
+  }
+
+  function test_releaseOrMintFrom1_5OffRamp() public {
+    uint256 amount = 10e18;
+    {
+      vm.selectFork(l1.forkId);
+      uint256 balanceBefore = l1.token.balanceOf(alice);
+      // mock release on legacy offramp
+      vm.prank(l1.EVM2EVMOffRamp1_5);
+      l1.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l2.chainSelector, "");
+      assertEq(l1.token.balanceOf(alice), balanceBefore + amount);
+    }
+    {
+      vm.selectFork(l2.forkId);
+      uint256 balanceBefore = l2.token.balanceOf(alice);
+      // mock release on legacy offramp
+      vm.prank(l2.EVM2EVMOffRamp1_5);
+      l2.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l1.chainSelector, "");
+      assertEq(l2.token.balanceOf(alice), balanceBefore + amount);
+    }
   }
 
   function _upgradeExistingLockReleaseTokenPool() internal {
