@@ -1,32 +1,32 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..ee359ac1f8 100644
+index b3571bb449..2cd98ba1fb 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,21 +1,21 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
- 
+
 -import {IPool} from "../interfaces/pools/IPool.sol";
 -import {IARM} from "../interfaces/IARM.sol";
 -import {IRouter} from "../interfaces/IRouter.sol";
 +import {IPool} from "../../interfaces/pools/IPool.sol";
 +import {IARM} from "../../interfaces/IARM.sol";
 +import {IRouter} from "../../interfaces/IRouter.sol";
- 
+
 -import {OwnerIsCreator} from "../../shared/access/OwnerIsCreator.sol";
 -import {RateLimiter} from "../libraries/RateLimiter.sol";
 +import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
 +import {RateLimiter} from "../../libraries/RateLimiter.sol";
- 
+
 -import {IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 -import {IERC165} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 -import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
 +import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 +import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 +import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
- 
+
  /// @notice Base abstract class with common functions for all token pools.
  /// A token pool serves as isolated place for holding tokens and token specific logic
  /// that may execute as tokens move across the bridge.
@@ -35,7 +35,28 @@ index b3571bb449..ee359ac1f8 100644
    using EnumerableSet for EnumerableSet.AddressSet;
    using EnumerableSet for EnumerableSet.UintSet;
    using RateLimiter for RateLimiter.TokenBucket;
-@@ -74,23 +74,17 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -28,6 +28,7 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+   error ChainNotAllowed(uint64 remoteChainSelector);
+   error BadARMSignal();
+   error ChainAlreadyExists(uint64 chainSelector);
++  error ProxyPoolAlreadySet(uint64 remoteChainSelector);
+
+   event Locked(address indexed sender, uint256 amount);
+   event Burned(address indexed sender, uint256 amount);
+@@ -55,6 +56,12 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+     RateLimiter.Config inboundRateLimiterConfig; // Inbound rate limited config, meaning the rate limits for all of the offRamps for the given chain
+   }
+
++  /// @dev The storage slot for Proxy Pool address, act as an on ramp "wrapper" post ccip 1.5 migration.
++  /// @dev This was added to continue support for 1.2 onRamp during 1.5 migration, and is stored
++  /// this way to avoid storage collision.
++  // bytes32(uint256(keccak256("ccip.pools.GHO.UpgradeableTokenPool.proxyPool")) - 1)
++  bytes32 internal constant PROXY_POOL_SLOT = 0x75bb68f1b335d4dab6963140ecff58281174ef4362bb85a8593ab9379f24fae2;
++
+   /// @dev The bridgeable token that is managed by this pool.
+   IERC20 internal immutable i_token;
+   /// @dev The address of the arm proxy
+@@ -74,23 +81,17 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    EnumerableSet.UintSet internal s_remoteChainSelectors;
    /// @dev Outbound rate limits. Corresponds to the inbound rate limit for the pool
    /// on the remote chain.
@@ -46,7 +67,7 @@ index b3571bb449..ee359ac1f8 100644
    /// degrees and prefer different limits)
 -  mapping(uint64 remoteChainSelector => RateLimiter.TokenBucket) internal s_inboundRateLimits;
 +  mapping(uint64 => RateLimiter.TokenBucket) internal s_inboundRateLimits;
- 
+
 -  constructor(IERC20 token, address[] memory allowlist, address armProxy, address router) {
 -    if (address(token) == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
 +  constructor(IERC20 token, address armProxy, bool allowlistEnabled) {
@@ -62,6 +83,49 @@ index b3571bb449..ee359ac1f8 100644
 -    }
 +    i_allowlistEnabled = allowlistEnabled;
    }
- 
+
    /// @notice Get ARM proxy address
+@@ -256,7 +257,8 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+   /// is a permissioned onRamp for the given chain on the Router.
+   modifier onlyOnRamp(uint64 remoteChainSelector) {
+     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
+-    if (!(msg.sender == s_router.getOnRamp(remoteChainSelector))) revert CallerIsNotARampOnRouter(msg.sender);
++    if (msg.sender != s_router.getOnRamp(remoteChainSelector) && msg.sender != getProxyPool(remoteChainSelector))
++      revert CallerIsNotARampOnRouter(msg.sender);
+     _;
+   }
+
+@@ -323,4 +325,32 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+     if (IARM(i_armProxy).isCursed()) revert BadARMSignal();
+     _;
+   }
++
++  /// @notice Getter for proxy pool address.
++  /// @param remoteChainSelector The remote chain selector for which the proxy pool is being retrieved.
++  /// @return proxyPool The proxy pool address for the given remoteChainSelector
++  function getProxyPool(uint64 remoteChainSelector) public view returns (address proxyPool) {
++    assembly ("memory-safe") {
++      mstore(0, PROXY_POOL_SLOT)
++      mstore(32, remoteChainSelector)
++      proxyPool := shr(96, shl(96, sload(keccak256(0, 64))))
++    }
++  }
++
++  /// @notice Setter for proxy pool address, only callable by the DAO.
++  /// @param remoteChainSelector The remote chain selector for which the proxy pool is being set.
++  /// @param proxyPool The address of the proxy pool.
++  function setProxyPool(uint64 remoteChainSelector, address proxyPool) external onlyOwner {
++    _setPoolProxy(remoteChainSelector, proxyPool);
++  }
++
++  function _setPoolProxy(uint64 remoteChainSelector, address proxyPool) internal {
++    if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
++    if (getProxyPool(remoteChainSelector) != address(0)) revert ProxyPoolAlreadySet(remoteChainSelector);
++    assembly ("memory-safe") {
++      mstore(0, PROXY_POOL_SLOT)
++      mstore(32, remoteChainSelector)
++      sstore(keccak256(0, 64), proxyPool)
++    }
++  }
+ }
 ```

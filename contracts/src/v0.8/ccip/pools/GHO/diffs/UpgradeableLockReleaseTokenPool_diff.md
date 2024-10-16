@@ -1,27 +1,27 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 1a17fa0398..9a30b1e977 100644
+index 1a17fa0398..9676fd95f3 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-@@ -1,26 +1,39 @@
+@@ -1,26 +1,43 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
- 
+
 -import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 -import {ILiquidityContainer} from "../../rebalancer/interfaces/ILiquidityContainer.sol";
 +import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
- 
+
 -import {TokenPool} from "./TokenPool.sol";
 -import {RateLimiter} from "../libraries/RateLimiter.sol";
 +import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 +import {ILiquidityContainer} from "../../../rebalancer/interfaces/ILiquidityContainer.sol";
- 
+
 -import {IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 -import {SafeERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
 +import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 +import {RateLimiter} from "../../libraries/RateLimiter.sol";
- 
+
 -/// @notice Token pool used for tokens on their native chain. This uses a lock and release mechanism.
 -/// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
 -/// liquidity. This allows for proper bookkeeping for both user and liquidity provider balances.
@@ -39,13 +39,17 @@ index 1a17fa0398..9a30b1e977 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
++/// - Modifications from inherited contracts
++///   - UpgradeableTokenPool
++///     - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
++///     - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 +contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion {
    using SafeERC20 for IERC20;
- 
+
    error InsufficientLiquidity();
    error LiquidityNotAccepted();
    error Unauthorized(address caller);
- 
+
 +  error BridgeLimitExceeded(uint256 bridgeLimit);
 +  error NotEnoughBridgedAmount();
 +
@@ -53,12 +57,12 @@ index 1a17fa0398..9a30b1e977 100644
 +  event BridgeLimitAdminUpdated(address indexed oldAdmin, address indexed newAdmin);
 +
    string public constant override typeAndVersion = "LockReleaseTokenPool 1.4.0";
- 
+
    /// @dev The unique lock release pool flag to signal through EIP 165.
-@@ -37,16 +50,55 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -37,14 +54,61 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @dev Can be address(0) if none is configured.
    address internal s_rateLimitAdmin;
- 
+
 +  /// @notice Maximum amount of tokens that can be bridged to other chains
 +  uint256 private s_bridgeLimit;
 +  /// @notice Amount of tokens bridged (transferred out)
@@ -85,8 +89,9 @@ index 1a17fa0398..9a30b1e977 100644
 +    bool acceptLiquidity
 +  ) UpgradeableTokenPool(IERC20(token), armProxy, allowlistEnabled) {
      i_acceptLiquidity = acceptLiquidity;
-   }
- 
++    _disableInitializers();
++  }
++
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.
 +  /// @dev The `allowlist` is only effective if pool is set to access-controlled mode
@@ -100,8 +105,7 @@ index 1a17fa0398..9a30b1e977 100644
 +    address router,
 +    uint256 bridgeLimit
 +  ) public virtual initializer {
-+    if (owner == address(0)) revert ZeroAddressNotAllowed();
-+    if (router == address(0)) revert ZeroAddressNotAllowed();
++    if (owner == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
 +    _transferOwnership(owner);
 +
 +    s_router = IRouter(router);
@@ -112,11 +116,9 @@ index 1a17fa0398..9a30b1e977 100644
 +    }
 +    s_bridgeLimit = bridgeLimit;
 +  }
-+
+
    /// @notice Locks the token in the pool
-   /// @param amount Amount to lock
-   /// @dev The whenHealthy check is important to ensure that even if a ramp is compromised
-@@ -66,6 +118,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -66,6 +130,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      whenHealthy
      returns (bytes memory)
    {
@@ -126,7 +128,7 @@ index 1a17fa0398..9a30b1e977 100644
      _consumeOutboundRateLimit(remoteChainSelector, amount);
      emit Locked(msg.sender, amount);
      return "";
-@@ -83,6 +138,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -83,6 +150,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      uint64 remoteChainSelector,
      bytes memory
    ) external virtual override onlyOffRamp(remoteChainSelector) whenHealthy {
@@ -138,10 +140,10 @@ index 1a17fa0398..9a30b1e977 100644
      _consumeInboundRateLimit(remoteChainSelector, amount);
      getToken().safeTransfer(receiver, amount);
      emit Released(msg.sender, receiver, amount);
-@@ -120,11 +180,48 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -120,11 +192,48 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      s_rateLimitAdmin = rateLimitAdmin;
    }
- 
+
 +  /// @notice Sets the bridge limit, the maximum amount of tokens that can be bridged out
 +  /// @dev Only callable by the owner or the bridge limit admin.
 +  /// @dev Bridge limit changes should be carefully managed, specially when reducing below the current bridged amount
@@ -178,7 +180,7 @@ index 1a17fa0398..9a30b1e977 100644
    function getRateLimitAdmin() external view returns (address) {
      return s_rateLimitAdmin;
    }
- 
+
 +  /// @notice Gets the bridge limiter admin address.
 +  function getBridgeLimitAdmin() external view returns (address) {
 +    return s_bridgeLimitAdmin;
@@ -187,4 +189,13 @@ index 1a17fa0398..9a30b1e977 100644
    /// @notice Checks if the pool can accept liquidity.
    /// @return true if the pool can accept liquidity, false otherwise.
    function canAcceptLiquidity() external view returns (bool) {
+@@ -151,7 +260,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+     emit LiquidityRemoved(msg.sender, amount);
+   }
+
+-  /// @notice Sets the rate limiter admin address.
++  /// @notice Sets the chain rate limiter config.
+   /// @dev Only callable by the owner or the rate limiter admin. NOTE: overwrites the normal
+   /// onlyAdmin check in the base implementation to also allow the rate limiter admin.
+   /// @param remoteChainSelector The remote chain selector for which the rate limits apply.
 ```

@@ -1,17 +1,17 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..a46ff915e5 100644
+index 9af0f22f4c..92f004ff04 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,90 @@
+@@ -1,28 +1,103 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
- 
+
 -import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 -import {IBurnMintERC20} from "../../shared/token/ERC20/IBurnMintERC20.sol";
 +import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
- 
+
 -import {TokenPool} from "./TokenPool.sol";
 -import {BurnMintTokenPoolAbstract} from "./BurnMintTokenPoolAbstract.sol";
 +import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
@@ -29,9 +29,14 @@ index 9af0f22f4c..a46ff915e5 100644
 +/// @dev Contract adaptations:
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
++/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
++/// - Modifications from inherited contracts
++///   - UpgradeableTokenPool
++///     - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
++///     - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 +contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
 +  error Unauthorized(address caller);
- 
+
 -/// @notice This pool mints and burns a 3rd-party token.
 -/// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
 -/// It either accepts any address as originalSender, or only accepts whitelisted originalSender.
@@ -39,7 +44,7 @@ index 9af0f22f4c..a46ff915e5 100644
 -/// If that is expected, please make sure the token's burner/minter roles are adjustable.
 -contract BurnMintTokenPool is BurnMintTokenPoolAbstract, ITypeAndVersion {
    string public constant override typeAndVersion = "BurnMintTokenPool 1.4.0";
- 
+
 +  /// @notice The address of the rate limiter admin.
 +  /// @dev Can be address(0) if none is configured.
 +  address internal s_rateLimitAdmin;
@@ -56,9 +61,10 @@ index 9af0f22f4c..a46ff915e5 100644
 -    address router
 -  ) TokenPool(token, allowlist, armProxy, router) {}
 +    bool allowlistEnabled
-+  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
- 
--  /// @inheritdoc BurnMintTokenPoolAbstract
++  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {
++    _disableInitializers();
++  }
++
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.
 +  /// @dev The `allowlist` is only effective if pool is set to access-controlled mode
@@ -66,8 +72,7 @@ index 9af0f22f4c..a46ff915e5 100644
 +  /// @param allowlist A set of addresses allowed to trigger lockOrBurn as original senders
 +  /// @param router The address of the router
 +  function initialize(address owner, address[] memory allowlist, address router) public virtual initializer {
-+    if (owner == address(0)) revert ZeroAddressNotAllowed();
-+    if (router == address(0)) revert ZeroAddressNotAllowed();
++    if (owner == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
 +    _transferOwnership(owner);
 +
 +    s_router = IRouter(router);
@@ -77,7 +82,7 @@ index 9af0f22f4c..a46ff915e5 100644
 +      _applyAllowListUpdates(new address[](0), allowlist);
 +    }
 +  }
-+
+++
 +  /// @notice Sets the rate limiter admin address.
 +  /// @dev Only callable by the owner.
 +  /// @param rateLimitAdmin The new rate limiter admin address.
@@ -90,7 +95,7 @@ index 9af0f22f4c..a46ff915e5 100644
 +    return s_rateLimitAdmin;
 +  }
 +
-+  /// @notice Sets the rate limiter admin address.
++  /// @notice Sets the chain rate limiter config.
 +  /// @dev Only callable by the owner or the rate limiter admin. NOTE: overwrites the normal
 +  /// onlyAdmin check in the base implementation to also allow the rate limiter admin.
 +  /// @param remoteChainSelector The remote chain selector for which the rate limits apply.
@@ -105,7 +110,8 @@ index 9af0f22f4c..a46ff915e5 100644
 +
 +    _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
 +  }
-+
+
+-  /// @inheritdoc BurnMintTokenPoolAbstract
 +  /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
    function _burn(uint256 amount) internal virtual override {
      IBurnMintERC20(address(i_token)).burn(amount);
