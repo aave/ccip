@@ -28,6 +28,7 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   error ChainNotAllowed(uint64 remoteChainSelector);
   error BadARMSignal();
   error ChainAlreadyExists(uint64 chainSelector);
+  error ProxyPoolAlreadySet(uint64 remoteChainSelector);
 
   event Locked(address indexed sender, uint256 amount);
   event Burned(address indexed sender, uint256 amount);
@@ -340,8 +341,12 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   /// @param remoteChainSelector The remote chain selector for which the proxy pool is being set.
   /// @param proxyPool The address of the proxy pool.
   function setProxyPool(uint64 remoteChainSelector, address proxyPool) external onlyOwner {
+    _setPoolProxy(remoteChainSelector, proxyPool);
+  }
+
+  function _setPoolProxy(uint64 remoteChainSelector, address proxyPool) internal {
     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
-    // todo: add check for typeAndVersion, immutable?
+    if (getProxyPool(remoteChainSelector) != address(0)) revert ProxyPoolAlreadySet(remoteChainSelector);
     assembly ("memory-safe") {
       mstore(0, PROXY_POOL_SLOT)
       mstore(32, remoteChainSelector)
