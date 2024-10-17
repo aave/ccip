@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 1a17fa0398..6da92b08cb 100644
+index 1a17fa0398..fa297dc765 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-@@ -1,26 +1,41 @@
+@@ -1,26 +1,40 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -19,7 +19,8 @@ index 1a17fa0398..6da92b08cb 100644
 
 -import {IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 -import {SafeERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
-+import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
++import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
++import {SafeERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
 +import {RateLimiter} from "../../libraries/RateLimiter.sol";
 
 -/// @notice Token pool used for tokens on their native chain. This uses a lock and release mechanism.
@@ -27,10 +28,8 @@ index 1a17fa0398..6da92b08cb 100644
 -/// liquidity. This allows for proper bookkeeping for both user and liquidity provider balances.
 -/// @dev One token per LockReleaseTokenPool.
 -contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion {
-+import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
-+import {SafeERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
-+
 +import {IRouter} from "../../interfaces/IRouter.sol";
++import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 +
 +/// @title UpgradeableLockReleaseTokenPool
 +/// @author Aave Labs
@@ -57,7 +56,7 @@ index 1a17fa0398..6da92b08cb 100644
    string public constant override typeAndVersion = "LockReleaseTokenPool 1.4.0";
 
    /// @dev The unique lock release pool flag to signal through EIP 165.
-@@ -37,14 +52,53 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -37,14 +51,53 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @dev Can be address(0) if none is configured.
    address internal s_rateLimitAdmin;
 
@@ -116,7 +115,7 @@ index 1a17fa0398..6da92b08cb 100644
    }
 
    /// @notice Locks the token in the pool
-@@ -66,6 +120,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -66,6 +119,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      whenHealthy
      returns (bytes memory)
    {
@@ -126,7 +125,7 @@ index 1a17fa0398..6da92b08cb 100644
      _consumeOutboundRateLimit(remoteChainSelector, amount);
      emit Locked(msg.sender, amount);
      return "";
-@@ -83,6 +140,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -83,6 +139,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      uint64 remoteChainSelector,
      bytes memory
    ) external virtual override onlyOffRamp(remoteChainSelector) whenHealthy {
@@ -138,7 +137,7 @@ index 1a17fa0398..6da92b08cb 100644
      _consumeInboundRateLimit(remoteChainSelector, amount);
      getToken().safeTransfer(receiver, amount);
      emit Released(msg.sender, receiver, amount);
-@@ -120,11 +182,48 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -120,11 +181,48 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      s_rateLimitAdmin = rateLimitAdmin;
    }
 
@@ -187,7 +186,7 @@ index 1a17fa0398..6da92b08cb 100644
    /// @notice Checks if the pool can accept liquidity.
    /// @return true if the pool can accept liquidity, false otherwise.
    function canAcceptLiquidity() external view returns (bool) {
-@@ -151,7 +250,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -151,7 +249,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      emit LiquidityRemoved(msg.sender, amount);
    }
 

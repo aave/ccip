@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..b0aa10016c 100644
+index b3571bb449..2e82bef88e 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-@@ -1,21 +1,24 @@
+@@ -1,21 +1,22 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 -
@@ -24,16 +24,14 @@ index b3571bb449..b0aa10016c 100644
 -abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
 +pragma solidity ^0.8.0;
 +
-+import {IPool} from "../../interfaces/pools/IPool.sol";
-+import {IARM} from "../../interfaces/IARM.sol";
-+import {IRouter} from "../../interfaces/IRouter.sol";
-+
 +import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
-+import {RateLimiter} from "../../libraries/RateLimiter.sol";
-+
 +import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 +import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 +import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
++import {IPool} from "../../interfaces/pools/IPool.sol";
++import {IARM} from "../../interfaces/IARM.sol";
++import {IRouter} from "../../interfaces/IRouter.sol";
++import {RateLimiter} from "../../libraries/RateLimiter.sol";
 +
 +/// @title UpgradeableTokenPool
 +/// @author Aave Labs
@@ -45,7 +43,7 @@ index b3571bb449..b0aa10016c 100644
    using EnumerableSet for EnumerableSet.AddressSet;
    using EnumerableSet for EnumerableSet.UintSet;
    using RateLimiter for RateLimiter.TokenBucket;
-@@ -28,6 +31,7 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -28,6 +29,7 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    error ChainNotAllowed(uint64 remoteChainSelector);
    error BadARMSignal();
    error ChainAlreadyExists(uint64 chainSelector);
@@ -53,7 +51,7 @@ index b3571bb449..b0aa10016c 100644
 
    event Locked(address indexed sender, uint256 amount);
    event Burned(address indexed sender, uint256 amount);
-@@ -55,6 +59,12 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -55,6 +57,12 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      RateLimiter.Config inboundRateLimiterConfig; // Inbound rate limited config, meaning the rate limits for all of the offRamps for the given chain
    }
 
@@ -66,7 +64,7 @@ index b3571bb449..b0aa10016c 100644
    /// @dev The bridgeable token that is managed by this pool.
    IERC20 internal immutable i_token;
    /// @dev The address of the arm proxy
-@@ -74,23 +84,17 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -74,23 +82,17 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    EnumerableSet.UintSet internal s_remoteChainSelectors;
    /// @dev Outbound rate limits. Corresponds to the inbound rate limit for the pool
    /// on the remote chain.
@@ -95,7 +93,7 @@ index b3571bb449..b0aa10016c 100644
    }
 
    /// @notice Get ARM proxy address
-@@ -256,7 +260,8 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -256,7 +258,8 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    /// is a permissioned onRamp for the given chain on the Router.
    modifier onlyOnRamp(uint64 remoteChainSelector) {
      if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
@@ -105,7 +103,7 @@ index b3571bb449..b0aa10016c 100644
      _;
    }
 
-@@ -323,4 +328,32 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -323,4 +326,32 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      if (IARM(i_armProxy).isCursed()) revert BadARMSignal();
      _;
    }

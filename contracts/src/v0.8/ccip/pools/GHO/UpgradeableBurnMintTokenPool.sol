@@ -5,12 +5,10 @@ import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initiali
 
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {IBurnMintERC20} from "../../../shared/token/ERC20/IBurnMintERC20.sol";
-
+import {RateLimiter} from "../../libraries/RateLimiter.sol";
+import {IRouter} from "../../interfaces/IRouter.sol";
 import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
 import {UpgradeableBurnMintTokenPoolAbstract} from "./UpgradeableBurnMintTokenPoolAbstract.sol";
-import {RateLimiter} from "../../libraries/RateLimiter.sol";
-
-import {IRouter} from "../../interfaces/IRouter.sol";
 
 /// @title UpgradeableBurnMintTokenPool
 /// @author Aave Labs
