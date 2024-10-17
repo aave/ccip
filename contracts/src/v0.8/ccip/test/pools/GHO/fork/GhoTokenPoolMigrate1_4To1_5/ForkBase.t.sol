@@ -192,11 +192,6 @@ contract ForkBase is Test {
     return keccak256(abi.encode(Internal.EVM_2_EVM_MESSAGE_HASH, sourceChainSelector, destChainSelector, onRamp));
   }
 
-  function _selectForkAndStartPrank(uint forkId) internal {
-    vm.selectFork(forkId);
-    vm.startPrank(alice);
-  }
-
   function _label() internal {
     vm.label(address(l1.tokenPool), "l1.tokenPool");
     vm.label(address(l1.token), "l1.token");
