@@ -23,11 +23,11 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
     // #2: setProxyPool
     vm.selectFork(l1.forkId);
     vm.prank(l1.tokenPool.owner());
-    l1.tokenPool.setProxyPool(l2.chainSelector, l1.proxyPool);
+    l1.tokenPool.setProxyPool(l1.proxyPool);
 
     vm.selectFork(l2.forkId);
     vm.prank(l2.tokenPool.owner());
-    l2.tokenPool.setProxyPool(l1.chainSelector, l2.proxyPool);
+    l2.tokenPool.setProxyPool(l2.proxyPool);
   }
 
   function test_lockOrBurnViaLegacyRouterL1() public {

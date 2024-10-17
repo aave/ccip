@@ -381,37 +381,20 @@ contract GhoTokenPoolRemote_proxyPool is GhoTokenPoolRemoteSetup {
   function testSetProxyPoolAdminReverts() public {
     vm.startPrank(STRANGER);
     vm.expectRevert("Only callable by owner");
-    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, makeAddr("proxyPool"));
+    s_pool.setProxyPool(makeAddr("proxyPool"));
   }
 
-  function testSetProxyPoolInvalidChainReverts(uint64 nonExistentChainSelector) public {
-    vm.assume(nonExistentChainSelector != DEST_CHAIN_SELECTOR);
-    changePrank(AAVE_DAO);
-    vm.expectRevert(abi.encodeWithSelector(UpgradeableTokenPool.ChainNotAllowed.selector, nonExistentChainSelector));
-    s_pool.setProxyPool(nonExistentChainSelector, makeAddr("proxyPool"));
+  function testSetProxyPoolZeroAddressReverts() public {
+    vm.startPrank(AAVE_DAO);
+    vm.expectRevert(UpgradeableTokenPool.ZeroAddressNotAllowed.selector);
+    s_pool.setProxyPool(address(0));
   }
 
   function testSetProxyPoolSuccess(address proxyPool) public {
+    vm.assume(proxyPool != address(0));
     changePrank(AAVE_DAO);
-    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, proxyPool);
+    s_pool.setProxyPool(proxyPool);
 
-    assertEq(s_pool.getProxyPool(DEST_CHAIN_SELECTOR), proxyPool);
-  }
-
-  function testFuzzGetProxyPool(uint64 chainSelector, address proxyPool) public {
-    vm.assume(chainSelector != DEST_CHAIN_SELECTOR);
-    UpgradeableTokenPool.ChainUpdate[] memory chains = new UpgradeableTokenPool.ChainUpdate[](1);
-    chains[0] = UpgradeableTokenPool.ChainUpdate({
-      remoteChainSelector: chainSelector,
-      allowed: true,
-      outboundRateLimiterConfig: getOutboundRateLimiterConfig(),
-      inboundRateLimiterConfig: getInboundRateLimiterConfig()
-    });
-
-    changePrank(AAVE_DAO);
-    s_pool.applyChainUpdates(chains); // more robust than modifying `s_remoteChainSelectors` set storage
-    s_pool.setProxyPool(chainSelector, proxyPool);
-
-    assertEq(s_pool.getProxyPool(chainSelector), proxyPool);
+    assertEq(s_pool.getProxyPool(), proxyPool);
   }
 }

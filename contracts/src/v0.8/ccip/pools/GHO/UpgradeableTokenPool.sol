@@ -257,7 +257,7 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   /// is a permissioned onRamp for the given chain on the Router.
   modifier onlyOnRamp(uint64 remoteChainSelector) {
     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
-    if (!(msg.sender == getProxyPool(remoteChainSelector) || msg.sender == s_router.getOnRamp(remoteChainSelector)))
+    if (!(msg.sender == getProxyPool() || msg.sender == s_router.getOnRamp(remoteChainSelector)))
       revert CallerIsNotARampOnRouter(msg.sender);
     _;
   }
@@ -327,29 +327,25 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   }
 
   /// @notice Getter for proxy pool address.
-  /// @param remoteChainSelector The remote chain selector for which the proxy pool is being retrieved.
   /// @return proxyPool The proxy pool address for the given remoteChainSelector
-  function getProxyPool(uint64 remoteChainSelector) public view returns (address proxyPool) {
+  function getProxyPool() public view returns (address proxyPool) {
     assembly ("memory-safe") {
-      mstore(0, PROXY_POOL_SLOT)
-      mstore(32, remoteChainSelector)
-      proxyPool := shr(96, shl(96, sload(keccak256(0, 64))))
+      proxyPool := shr(96, shl(96, sload(PROXY_POOL_SLOT)))
     }
   }
 
   /// @notice Setter for proxy pool address, only callable by the DAO.
-  /// @param remoteChainSelector The remote chain selector for which the proxy pool is being set.
+  /// @dev This router is currently set for the Eth/Arb lane, and this pool is not expected
+  /// to support any other lanes in the future - hence can be stored agnostic to chain selector.
   /// @param proxyPool The address of the proxy pool.
-  function setProxyPool(uint64 remoteChainSelector, address proxyPool) external onlyOwner {
-    _setPoolProxy(remoteChainSelector, proxyPool);
+  function setProxyPool(address proxyPool) external onlyOwner {
+    _setPoolProxy(proxyPool);
   }
 
-  function _setPoolProxy(uint64 remoteChainSelector, address proxyPool) internal {
-    if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
+  function _setPoolProxy(address proxyPool) internal {
+    if (proxyPool == address(0)) revert ZeroAddressNotAllowed();
     assembly ("memory-safe") {
-      mstore(0, PROXY_POOL_SLOT)
-      mstore(32, remoteChainSelector)
-      sstore(keccak256(0, 64), proxyPool)
+      sstore(PROXY_POOL_SLOT, proxyPool)
     }
   }
 }
