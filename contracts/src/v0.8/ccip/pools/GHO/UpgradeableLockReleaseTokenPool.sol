@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
-
 import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 import {ILiquidityContainer} from "../../../rebalancer/interfaces/ILiquidityContainer.sol";
 
+import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
+import {RateLimiter} from "../../libraries/RateLimiter.sol";
+
 import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
-import {RateLimiter} from "../../libraries/RateLimiter.sol";
 import {IRouter} from "../../interfaces/IRouter.sol";
-import {UpgradeableTokenPool} from "./UpgradeableTokenPool.sol";
+import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
 
 /// @title UpgradeableLockReleaseTokenPool
 /// @author Aave Labs
