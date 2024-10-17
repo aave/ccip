@@ -414,18 +414,4 @@ contract GhoTokenPoolRemote_proxyPool is GhoTokenPoolRemoteSetup {
 
     assertEq(s_pool.getProxyPool(chainSelector), proxyPool);
   }
-
-  function testSetProxyPoolOnlyOnce(address newProxyPool) public {
-    changePrank(AAVE_DAO);
-    address proxyPool = makeAddr("proxyPool");
-    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, proxyPool);
-
-    vm.expectRevert(abi.encodeWithSelector(UpgradeableTokenPool.ProxyPoolAlreadySet.selector, DEST_CHAIN_SELECTOR));
-    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, proxyPool);
-
-    vm.expectRevert(abi.encodeWithSelector(UpgradeableTokenPool.ProxyPoolAlreadySet.selector, DEST_CHAIN_SELECTOR));
-    s_pool.setProxyPool(DEST_CHAIN_SELECTOR, newProxyPool);
-
-    assertEq(s_pool.getProxyPool(DEST_CHAIN_SELECTOR), proxyPool);
-  }
 }
