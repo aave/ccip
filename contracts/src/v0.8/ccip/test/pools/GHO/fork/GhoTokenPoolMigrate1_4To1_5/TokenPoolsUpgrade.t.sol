@@ -30,7 +30,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
     l2.tokenPool.setProxyPool(l2.proxyPool);
   }
 
-  function test_lockOrBurnViaLegacyRouterL1() public {
+  function testLockOrBurnViaLegacyRouterL1() public {
     vm.selectFork(l1.forkId);
 
     uint256 amount = 10e18;
@@ -45,7 +45,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
     l1.router.ccipSend{value: feeTokenAmount}(l2.chainSelector, message);
   }
 
-  function test_releaseOrMintVia1_2OffRamp() public {
+  function testReleaseOrMintVia1_2OffRamp() public {
     uint256 amount = 10e18;
     {
       vm.selectFork(l1.forkId);
@@ -65,7 +65,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
     }
   }
 
-  function test_releaseOrMintVia1_5OffRamp() public {
+  function testReleaseOrMintVia1_5OffRamp() public {
     uint256 amount = 10e18;
     {
       vm.selectFork(l1.forkId);
