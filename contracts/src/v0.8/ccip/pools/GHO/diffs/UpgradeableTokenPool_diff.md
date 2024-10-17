@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..24f893d3c7 100644
+index b3571bb449..950b87a080 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,21 +1,24 @@
@@ -87,17 +87,18 @@ index b3571bb449..24f893d3c7 100644
    }
 
    /// @notice Get ARM proxy address
-@@ -256,7 +259,8 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -256,7 +259,9 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    /// is a permissioned onRamp for the given chain on the Router.
    modifier onlyOnRamp(uint64 remoteChainSelector) {
      if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
 -    if (!(msg.sender == s_router.getOnRamp(remoteChainSelector))) revert CallerIsNotARampOnRouter(msg.sender);
-+    if (!(msg.sender == getProxyPool() || msg.sender == s_router.getOnRamp(remoteChainSelector)))
++    if (!(msg.sender == getProxyPool() || msg.sender == s_router.getOnRamp(remoteChainSelector))) {
 +      revert CallerIsNotARampOnRouter(msg.sender);
++    }
      _;
    }
 
-@@ -323,4 +327,27 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -323,4 +328,23 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      if (IARM(i_armProxy).isCursed()) revert BadARMSignal();
      _;
    }
@@ -115,10 +116,6 @@ index b3571bb449..24f893d3c7 100644
 +  /// to support any other lanes in the future - hence can be stored agnostic to chain selector.
 +  /// @param proxyPool The address of the proxy pool.
 +  function setProxyPool(address proxyPool) external onlyOwner {
-+    _setPoolProxy(proxyPool);
-+  }
-+
-+  function _setPoolProxy(address proxyPool) internal {
 +    if (proxyPool == address(0)) revert ZeroAddressNotAllowed();
 +    assembly ("memory-safe") {
 +      sstore(PROXY_POOL_SLOT, proxyPool)

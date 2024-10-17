@@ -259,8 +259,9 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   /// is a permissioned onRamp for the given chain on the Router.
   modifier onlyOnRamp(uint64 remoteChainSelector) {
     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
-    if (!(msg.sender == getProxyPool() || msg.sender == s_router.getOnRamp(remoteChainSelector)))
+    if (!(msg.sender == getProxyPool() || msg.sender == s_router.getOnRamp(remoteChainSelector))) {
       revert CallerIsNotARampOnRouter(msg.sender);
+    }
     _;
   }
 
@@ -341,10 +342,6 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   /// to support any other lanes in the future - hence can be stored agnostic to chain selector.
   /// @param proxyPool The address of the proxy pool.
   function setProxyPool(address proxyPool) external onlyOwner {
-    _setPoolProxy(proxyPool);
-  }
-
-  function _setPoolProxy(address proxyPool) internal {
     if (proxyPool == address(0)) revert ZeroAddressNotAllowed();
     assembly ("memory-safe") {
       sstore(PROXY_POOL_SLOT, proxyPool)
