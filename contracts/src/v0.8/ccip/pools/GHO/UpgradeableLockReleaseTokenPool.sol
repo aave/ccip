@@ -21,10 +21,8 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
-/// - Modifications from inherited contracts
-///   - UpgradeableTokenPool
-///     - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
-///     - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
+/// - Modifications from inherited contract (see contract for more details):
+///   - UpgradeableTokenPool: Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion {
   using SafeERC20 for IERC20;
 
@@ -91,8 +89,7 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
     address router,
     uint256 bridgeLimit
   ) public virtual initializer {
-    if (owner == address(0)) revert ZeroAddressNotAllowed();
-    if (router == address(0)) revert ZeroAddressNotAllowed();
+    if (owner == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
     _transferOwnership(owner);
 
     s_router = IRouter(router);

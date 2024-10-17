@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..92f004ff04 100644
+index 9af0f22f4c..0a46d052d0 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,103 @@
+@@ -1,28 +1,94 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -30,10 +30,8 @@ index 9af0f22f4c..92f004ff04 100644
 +/// - Implementation of Initializable to allow upgrades
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Inclusion of rate limit admin who may configure rate limits in addition to owner
-+/// - Modifications from inherited contracts
-+///   - UpgradeableTokenPool
-+///     - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
-+///     - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
++/// - Modifications from inherited contract (see contract for more details):
++///   - UpgradeableTokenPool: Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 +contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
 +  error Unauthorized(address caller);
 
@@ -82,7 +80,7 @@ index 9af0f22f4c..92f004ff04 100644
 +      _applyAllowListUpdates(new address[](0), allowlist);
 +    }
 +  }
-++
++
 +  /// @notice Sets the rate limiter admin address.
 +  /// @dev Only callable by the owner.
 +  /// @param rateLimitAdmin The new rate limiter admin address.

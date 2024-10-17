@@ -19,10 +19,8 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Inclusion of rate limit admin who may configure rate limits in addition to owner
-/// - Modifications from inherited contracts
-///   - UpgradeableTokenPool
-///     - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
-///     - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
+/// - Modifications from inherited contract (see contract for more details):
+///   - UpgradeableTokenPool: Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
   error Unauthorized(address caller);
 
@@ -51,8 +49,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
   /// @param allowlist A set of addresses allowed to trigger lockOrBurn as original senders
   /// @param router The address of the router
   function initialize(address owner, address[] memory allowlist, address router) public virtual initializer {
-    if (owner == address(0)) revert ZeroAddressNotAllowed();
-    if (router == address(0)) revert ZeroAddressNotAllowed();
+    if (owner == address(0) || router == address(0)) revert ZeroAddressNotAllowed();
     _transferOwnership(owner);
 
     s_router = IRouter(router);

@@ -12,9 +12,12 @@ import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/tok
 import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
 
-/// @notice Base abstract class with common functions for all token pools.
-/// A token pool serves as isolated place for holding tokens and token specific logic
-/// that may execute as tokens move across the bridge.
+/// @title UpgradeableTokenPool
+/// @author Aave Labs
+/// @notice Upgradeable version of Chainlink's CCIP TokenPool
+/// @dev Contract adaptations:
+///   - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
+///   - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableSet for EnumerableSet.UintSet;

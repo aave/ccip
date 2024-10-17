@@ -1,41 +1,51 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..2cd98ba1fb 100644
+index b3571bb449..b0aa10016c 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-@@ -1,21 +1,21 @@
+@@ -1,21 +1,24 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
-+pragma solidity ^0.8.0;
-
+-
 -import {IPool} from "../interfaces/pools/IPool.sol";
 -import {IARM} from "../interfaces/IARM.sol";
 -import {IRouter} from "../interfaces/IRouter.sol";
-+import {IPool} from "../../interfaces/pools/IPool.sol";
-+import {IARM} from "../../interfaces/IARM.sol";
-+import {IRouter} from "../../interfaces/IRouter.sol";
-
+-
 -import {OwnerIsCreator} from "../../shared/access/OwnerIsCreator.sol";
 -import {RateLimiter} from "../libraries/RateLimiter.sol";
-+import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
-+import {RateLimiter} from "../../libraries/RateLimiter.sol";
-
+-
 -import {IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 -import {IERC165} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 -import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
+-
+-/// @notice Base abstract class with common functions for all token pools.
+-/// A token pool serves as isolated place for holding tokens and token specific logic
+-/// that may execute as tokens move across the bridge.
+-abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
++pragma solidity ^0.8.0;
++
++import {IPool} from "../../interfaces/pools/IPool.sol";
++import {IARM} from "../../interfaces/IARM.sol";
++import {IRouter} from "../../interfaces/IRouter.sol";
++
++import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
++import {RateLimiter} from "../../libraries/RateLimiter.sol";
++
 +import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 +import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 +import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
-
- /// @notice Base abstract class with common functions for all token pools.
- /// A token pool serves as isolated place for holding tokens and token specific logic
- /// that may execute as tokens move across the bridge.
--abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
++
++/// @title UpgradeableTokenPool
++/// @author Aave Labs
++/// @notice Upgradeable version of Chainlink's CCIP TokenPool
++/// @dev Contract adaptations:
++///   - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
++///   - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
 +abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
    using EnumerableSet for EnumerableSet.AddressSet;
    using EnumerableSet for EnumerableSet.UintSet;
    using RateLimiter for RateLimiter.TokenBucket;
-@@ -28,6 +28,7 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -28,6 +31,7 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    error ChainNotAllowed(uint64 remoteChainSelector);
    error BadARMSignal();
    error ChainAlreadyExists(uint64 chainSelector);
@@ -43,7 +53,7 @@ index b3571bb449..2cd98ba1fb 100644
 
    event Locked(address indexed sender, uint256 amount);
    event Burned(address indexed sender, uint256 amount);
-@@ -55,6 +56,12 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -55,6 +59,12 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      RateLimiter.Config inboundRateLimiterConfig; // Inbound rate limited config, meaning the rate limits for all of the offRamps for the given chain
    }
 
@@ -56,7 +66,7 @@ index b3571bb449..2cd98ba1fb 100644
    /// @dev The bridgeable token that is managed by this pool.
    IERC20 internal immutable i_token;
    /// @dev The address of the arm proxy
-@@ -74,23 +81,17 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -74,23 +84,17 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    EnumerableSet.UintSet internal s_remoteChainSelectors;
    /// @dev Outbound rate limits. Corresponds to the inbound rate limit for the pool
    /// on the remote chain.
@@ -85,17 +95,17 @@ index b3571bb449..2cd98ba1fb 100644
    }
 
    /// @notice Get ARM proxy address
-@@ -256,7 +257,8 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -256,7 +260,8 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
    /// is a permissioned onRamp for the given chain on the Router.
    modifier onlyOnRamp(uint64 remoteChainSelector) {
      if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
 -    if (!(msg.sender == s_router.getOnRamp(remoteChainSelector))) revert CallerIsNotARampOnRouter(msg.sender);
-+    if (msg.sender != s_router.getOnRamp(remoteChainSelector) && msg.sender != getProxyPool(remoteChainSelector))
++    if (!(msg.sender == getProxyPool(remoteChainSelector) || msg.sender == s_router.getOnRamp(remoteChainSelector)))
 +      revert CallerIsNotARampOnRouter(msg.sender);
      _;
    }
 
-@@ -323,4 +325,32 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -323,4 +328,32 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      if (IARM(i_armProxy).isCursed()) revert BadARMSignal();
      _;
    }
