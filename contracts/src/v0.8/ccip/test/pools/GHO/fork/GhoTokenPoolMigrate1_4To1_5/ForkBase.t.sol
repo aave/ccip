@@ -223,7 +223,7 @@ contract ForkPoolAfterMigration is ForkBase {
     super.setUp();
   }
 
-  function test_RevertSendLegacyPool() public {
+  function testSendViaLegacyPoolReverts() public {
     uint256 amount = 10e18;
     Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
     message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l1.token), amount: amount});
