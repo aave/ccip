@@ -223,22 +223,30 @@ contract ForkPoolAfterMigration is ForkBase {
     super.setUp();
   }
 
+  /// @dev Tests current version of token pools do not work with legacy on-ramps post 1.5 CCIP Migration
+  /// Only lockOrBurn is incompatible post migration since the new proxyPool becomes a 'wrapped' router
+  /// for the existing token pool, releaseOrMint is still compatible with legacy on-ramps
+  /// see more: https://github.com/smartcontractkit/ccip/blob/11c275959902783a3c4eaddbfaa5ce5f8707e01f/contracts/src/v0.8/ccip/test/legacy/TokenPoolAndProxy.t.sol#L130-L192
   function testSendViaLegacyPoolReverts() public {
     uint256 amount = 10e18;
+    // generate lockOrBurn message for lockRelease token pool on L1
     Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
     message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l1.token), amount: amount});
 
     vm.selectFork(l1.forkId);
     uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
 
+    // validate send reverts with onRamp caller as proxyPool
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(CallerIsNotARampOnRouter.selector, l1.proxyPool));
     l1.router.ccipSend{value: feeTokenAmount}(l2.chainSelector, message);
 
     vm.selectFork(l2.forkId);
+    // modify generated lockOrBurn message for burnMint tokenPool on L2
     message.tokenAmounts[0].token = address(l2.token);
     feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
 
+    // validate send reverts with onRamp caller as proxyPool
     vm.prank(alice);
     vm.expectRevert(abi.encodeWithSelector(CallerIsNotARampOnRouter.selector, l2.proxyPool));
     l2.router.ccipSend{value: feeTokenAmount}(l1.chainSelector, message);
