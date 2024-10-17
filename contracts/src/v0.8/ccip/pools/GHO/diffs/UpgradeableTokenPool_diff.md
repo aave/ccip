@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..950b87a080 100644
+index b3571bb449..4808aa3998 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,21 +1,24 @@
@@ -98,7 +98,7 @@ index b3571bb449..950b87a080 100644
      _;
    }
 
-@@ -323,4 +328,23 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -323,4 +328,21 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      if (IARM(i_armProxy).isCursed()) revert BadARMSignal();
      _;
    }
@@ -112,8 +112,6 @@ index b3571bb449..950b87a080 100644
 +  }
 +
 +  /// @notice Setter for proxy pool address, only callable by the DAO.
-+  /// @dev This router is currently set for the Eth/Arb lane, and this pool is not expected
-+  /// to support any other lanes in the future - hence can be stored agnostic to chain selector.
 +  /// @param proxyPool The address of the proxy pool.
 +  function setProxyPool(address proxyPool) external onlyOwner {
 +    if (proxyPool == address(0)) revert ZeroAddressNotAllowed();

@@ -338,8 +338,6 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   }
 
   /// @notice Setter for proxy pool address, only callable by the DAO.
-  /// @dev This router is currently set for the Eth/Arb lane, and this pool is not expected
-  /// to support any other lanes in the future - hence can be stored agnostic to chain selector.
   /// @param proxyPool The address of the proxy pool.
   function setProxyPool(address proxyPool) external onlyOwner {
     if (proxyPool == address(0)) revert ZeroAddressNotAllowed();
