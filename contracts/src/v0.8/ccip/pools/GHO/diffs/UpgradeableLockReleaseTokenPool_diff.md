@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 1a17fa0398..ccf5ff4282 100644
+index 1a17fa0398..7de31fa91e 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,26 +1,39 @@
@@ -10,6 +10,7 @@ index 1a17fa0398..ccf5ff4282 100644
 
 -import {ITypeAndVersion} from "../../shared/interfaces/ITypeAndVersion.sol";
 -import {ILiquidityContainer} from "../../rebalancer/interfaces/ILiquidityContainer.sol";
++import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
 +import {ITypeAndVersion} from "../../../shared/interfaces/ITypeAndVersion.sol";
 +import {ILiquidityContainer} from "../../../rebalancer/interfaces/ILiquidityContainer.sol";
 
@@ -23,7 +24,6 @@ index 1a17fa0398..ccf5ff4282 100644
 +import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 +import {SafeERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/utils/SafeERC20.sol";
 +import {IRouter} from "../../interfaces/IRouter.sol";
-+import {Initializable} from "solidity-utils/contracts/transparent-proxy/Initializable.sol";
 
 -/// @notice Token pool used for tokens on their native chain. This uses a lock and release mechanism.
 -/// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
