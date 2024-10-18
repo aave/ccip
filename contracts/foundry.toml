@@ -16,6 +16,10 @@ gas_price = 1
 block_timestamp = 1234567890
 block_number = 12345
 
+[rpc_endpoints]
+sepolia = "https://sepolia.gateway.tenderly.co"
+arb_sepolia = "https://arbitrum-sepolia.gateway.tenderly.co"
+
 [profile.ccip]
 solc_version = '0.8.19'
 src = 'src/v0.8/ccip'
