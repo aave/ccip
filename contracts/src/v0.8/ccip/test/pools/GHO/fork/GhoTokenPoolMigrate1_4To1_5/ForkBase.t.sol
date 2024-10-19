@@ -257,6 +257,11 @@ contract ForkPoolAfterMigration is ForkBase {
 }
 
 contract ForkPoolBeforeMigration is ForkBase {
+  event Locked(address indexed sender, uint256 amount);
+  event Burned(address indexed sender, uint256 amount);
+  event Released(address indexed sender, address indexed recipient, uint256 amount);
+  event Minted(address indexed sender, address indexed recipient, uint256 amount);
+
   uint256 internal constant BLOCK_BEFORE_MIGRATION_L1 = 6673089;
   uint256 internal constant BLOCK_BEFORE_MIGRATION_L2 = 79570677;
 
@@ -321,24 +326,25 @@ contract ForkPoolBeforeMigration is ForkBase {
 
   function testSendViaRouter() public {
     uint256 amount = 10e18;
-
     Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
     message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l1.token), amount: amount});
 
     {
       vm.selectFork(l1.forkId);
-
       uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
 
+      vm.expectEmit();
+      emit Locked(address(l1.EVM2EVMOnRamp1_2), amount);
       vm.prank(alice);
       l1.router.ccipSend{value: feeTokenAmount}(l2.chainSelector, message);
     }
     {
       vm.selectFork(l2.forkId);
-
       message.tokenAmounts[0].token = address(l2.token);
       uint256 feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
 
+      vm.expectEmit();
+      emit Burned(address(l2.EVM2EVMOnRamp1_2), amount);
       vm.prank(alice);
       l2.router.ccipSend{value: feeTokenAmount}(l1.chainSelector, message);
     }
@@ -349,15 +355,18 @@ contract ForkPoolBeforeMigration is ForkBase {
     {
       vm.selectFork(l1.forkId);
 
+      vm.expectEmit();
+      emit Locked(address(l1.EVM2EVMOnRamp1_2), amount);
       vm.prank(address(l1.EVM2EVMOnRamp1_2));
       l1.tokenPool.lockOrBurn(alice, abi.encode(alice), amount, l2.chainSelector, "");
     }
     {
       vm.selectFork(l2.forkId);
-
       // router is responsible for transferring liquidity, so we mock router.token.transferFrom(user, tokenPool)
       deal(address(l2.token), address(l2.tokenPool), amount);
 
+      vm.expectEmit();
+      emit Burned(address(l2.EVM2EVMOnRamp1_2), amount);
       vm.prank(address(l2.EVM2EVMOnRamp1_2));
       l2.tokenPool.lockOrBurn(alice, abi.encode(alice), amount, l1.chainSelector, "");
     }
@@ -367,9 +376,10 @@ contract ForkPoolBeforeMigration is ForkBase {
     uint256 amount = 10e18;
     {
       vm.selectFork(l1.forkId);
-
       uint256 balanceBefore = l1.token.balanceOf(alice);
 
+      vm.expectEmit();
+      emit Released(address(l1.EVM2EVMOffRamp1_2), alice, amount);
       vm.prank(address(l1.EVM2EVMOffRamp1_2));
       l1.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l2.chainSelector, "");
 
@@ -377,9 +387,10 @@ contract ForkPoolBeforeMigration is ForkBase {
     }
     {
       vm.selectFork(l2.forkId);
-
       uint256 balanceBefore = l2.token.balanceOf(alice);
 
+      vm.expectEmit();
+      emit Minted(address(l2.EVM2EVMOffRamp1_2), alice, amount);
       vm.prank(address(l2.EVM2EVMOffRamp1_2));
       l2.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l1.chainSelector, "");
 
