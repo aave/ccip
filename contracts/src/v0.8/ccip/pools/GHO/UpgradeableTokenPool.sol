@@ -330,7 +330,7 @@ abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   }
 
   /// @notice Getter for proxy pool address.
-  /// @return proxyPool The proxy pool address for the given remoteChainSelector
+  /// @return proxyPool The proxy pool address.
   function getProxyPool() public view returns (address proxyPool) {
     assembly ("memory-safe") {
       proxyPool := shr(96, shl(96, sload(PROXY_POOL_SLOT)))

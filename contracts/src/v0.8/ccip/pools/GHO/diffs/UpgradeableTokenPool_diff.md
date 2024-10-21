@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..4808aa3998 100644
+index b3571bb449..aa86725ef6 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,21 +1,24 @@
@@ -104,7 +104,7 @@ index b3571bb449..4808aa3998 100644
    }
 +
 +  /// @notice Getter for proxy pool address.
-+  /// @return proxyPool The proxy pool address for the given remoteChainSelector
++  /// @return proxyPool The proxy pool address.
 +  function getProxyPool() public view returns (address proxyPool) {
 +    assembly ("memory-safe") {
 +      proxyPool := shr(96, shl(96, sload(PROXY_POOL_SLOT)))
