@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..aa86725ef6 100644
+index b3571bb449..7cae344a2e 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,21 +1,24 @@
@@ -94,7 +94,18 @@ index b3571bb449..aa86725ef6 100644
      _;
    }
 
-@@ -323,4 +328,21 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+@@ -264,7 +269,9 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
+   /// is a permissioned offRamp for the given chain on the Router.
+   modifier onlyOffRamp(uint64 remoteChainSelector) {
+     if (!isSupportedChain(remoteChainSelector)) revert ChainNotAllowed(remoteChainSelector);
+-    if (!s_router.isOffRamp(remoteChainSelector, msg.sender)) revert CallerIsNotARampOnRouter(msg.sender);
++    if (!(msg.sender == getProxyPool() || s_router.isOffRamp(remoteChainSelector, msg.sender))) {
++      revert CallerIsNotARampOnRouter(msg.sender);
++    }
+     _;
+   }
+
+@@ -323,4 +330,21 @@ abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
      if (IARM(i_armProxy).isCursed()) revert BadARMSignal();
      _;
    }
