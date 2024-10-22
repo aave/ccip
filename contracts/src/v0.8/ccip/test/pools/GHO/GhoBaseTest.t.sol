@@ -51,7 +51,7 @@ abstract contract GhoBaseTest is BaseTest {
       emptyArray,
       router
     );
-    TransparentUpgradeableProxy tokenProxyPool = new TransparentUpgradeableProxy(
+    TransparentUpgradeableProxy tokenPoolProxy = new TransparentUpgradeableProxy(
       address(tokenPoolImpl),
       proxyAdmin,
       tokenPoolInitParams
@@ -59,10 +59,10 @@ abstract contract GhoBaseTest is BaseTest {
     // Manage ownership
     vm.stopPrank();
     vm.prank(owner);
-    UpgradeableBurnMintTokenPool(address(tokenProxyPool)).acceptOwnership();
+    UpgradeableBurnMintTokenPool(address(tokenPoolProxy)).acceptOwnership();
     vm.startPrank(OWNER);
 
-    return address(tokenProxyPool);
+    return address(tokenPoolProxy);
   }
 
   function _deployUpgradeableLockReleaseTokenPool(
@@ -83,7 +83,7 @@ abstract contract GhoBaseTest is BaseTest {
       router,
       bridgeLimit
     );
-    TransparentUpgradeableProxy tokenProxyPool = new TransparentUpgradeableProxy(
+    TransparentUpgradeableProxy tokenPoolProxy = new TransparentUpgradeableProxy(
       address(tokenPoolImpl),
       proxyAdmin,
       tokenPoolInitParams
@@ -92,10 +92,10 @@ abstract contract GhoBaseTest is BaseTest {
     // Manage ownership
     vm.stopPrank();
     vm.prank(owner);
-    UpgradeableLockReleaseTokenPool(address(tokenProxyPool)).acceptOwnership();
+    UpgradeableLockReleaseTokenPool(address(tokenPoolProxy)).acceptOwnership();
     vm.startPrank(OWNER);
 
-    return address(tokenProxyPool);
+    return address(tokenPoolProxy);
   }
 
   function _inflateFacilitatorLevel(address tokenPool, address ghoToken, uint256 amount) internal {

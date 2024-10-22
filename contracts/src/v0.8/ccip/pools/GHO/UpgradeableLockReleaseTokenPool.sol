@@ -71,7 +71,6 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
     bool acceptLiquidity
   ) UpgradeableTokenPool(IERC20(token), armProxy, allowlistEnabled) {
     i_acceptLiquidity = acceptLiquidity;
-    _disableInitializers();
   }
 
   /// @dev Initializer
