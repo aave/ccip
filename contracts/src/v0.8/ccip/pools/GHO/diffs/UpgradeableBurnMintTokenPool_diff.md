@@ -58,7 +58,8 @@ index 9af0f22f4c..99f8a7b42f 100644
 -  ) TokenPool(token, allowlist, armProxy, router) {}
 +    bool allowlistEnabled
 +  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
-+
+
+-  /// @inheritdoc BurnMintTokenPoolAbstract
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.
 +  /// @dev The `allowlist` is only effective if pool is set to access-controlled mode
@@ -104,8 +105,7 @@ index 9af0f22f4c..99f8a7b42f 100644
 +
 +    _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
 +  }
-
--  /// @inheritdoc BurnMintTokenPoolAbstract
++
 +  /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
    function _burn(uint256 amount) internal virtual override {
      IBurnMintERC20(address(i_token)).burn(amount);
