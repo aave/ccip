@@ -376,3 +376,25 @@ contract GhoTokenPoolRemote_setRateLimitAdmin is GhoTokenPoolRemoteSetup {
     s_pool.setRateLimitAdmin(STRANGER);
   }
 }
+
+contract GhoTokenPoolRemote_proxyPool is GhoTokenPoolRemoteSetup {
+  function testSetProxyPoolAdminReverts() public {
+    vm.startPrank(STRANGER);
+    vm.expectRevert("Only callable by owner");
+    s_pool.setProxyPool(makeAddr("proxyPool"));
+  }
+
+  function testSetProxyPoolZeroAddressReverts() public {
+    vm.startPrank(AAVE_DAO);
+    vm.expectRevert(UpgradeableTokenPool.ZeroAddressNotAllowed.selector);
+    s_pool.setProxyPool(address(0));
+  }
+
+  function testSetProxyPoolSuccess(address proxyPool) public {
+    vm.assume(proxyPool != address(0));
+    changePrank(AAVE_DAO);
+    s_pool.setProxyPool(proxyPool);
+
+    assertEq(s_pool.getProxyPool(), proxyPool);
+  }
+}
