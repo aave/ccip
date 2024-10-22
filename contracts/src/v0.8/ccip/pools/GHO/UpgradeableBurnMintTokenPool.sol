@@ -36,9 +36,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     address token,
     address armProxy,
     bool allowlistEnabled
-  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {
-    _disableInitializers();
-  }
+  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
 
   /// @dev Initializer
   /// @dev The address passed as `owner` must accept ownership after initialization.

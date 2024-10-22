@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..57a3226ef4 100644
+index 9af0f22f4c..99f8a7b42f 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,92 @@
+@@ -1,28 +1,90 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -57,9 +57,7 @@ index 9af0f22f4c..57a3226ef4 100644
 -    address router
 -  ) TokenPool(token, allowlist, armProxy, router) {}
 +    bool allowlistEnabled
-+  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {
-+    _disableInitializers();
-+  }
++  ) UpgradeableTokenPool(IBurnMintERC20(token), armProxy, allowlistEnabled) {}
 +
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.

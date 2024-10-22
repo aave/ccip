@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 1a17fa0398..7de31fa91e 100644
+index 1a17fa0398..a055c8b8cd 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,26 +1,39 @@
@@ -55,7 +55,7 @@ index 1a17fa0398..7de31fa91e 100644
    string public constant override typeAndVersion = "LockReleaseTokenPool 1.4.0";
 
    /// @dev The unique lock release pool flag to signal through EIP 165.
-@@ -37,14 +50,53 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -37,16 +50,54 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @dev Can be address(0) if none is configured.
    address internal s_rateLimitAdmin;
 
@@ -85,9 +85,8 @@ index 1a17fa0398..7de31fa91e 100644
 +    bool acceptLiquidity
 +  ) UpgradeableTokenPool(IERC20(token), armProxy, allowlistEnabled) {
      i_acceptLiquidity = acceptLiquidity;
-+    _disableInitializers();
-+  }
-+
+   }
+
 +  /// @dev Initializer
 +  /// @dev The address passed as `owner` must accept ownership after initialization.
 +  /// @dev The `allowlist` is only effective if pool is set to access-controlled mode
@@ -111,10 +110,12 @@ index 1a17fa0398..7de31fa91e 100644
 +      _applyAllowListUpdates(new address[](0), allowlist);
 +    }
 +    s_bridgeLimit = bridgeLimit;
-   }
-
++  }
++
    /// @notice Locks the token in the pool
-@@ -66,6 +118,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+   /// @param amount Amount to lock
+   /// @dev The whenHealthy check is important to ensure that even if a ramp is compromised
+@@ -66,6 +117,9 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      whenHealthy
      returns (bytes memory)
    {
@@ -124,7 +125,7 @@ index 1a17fa0398..7de31fa91e 100644
      _consumeOutboundRateLimit(remoteChainSelector, amount);
      emit Locked(msg.sender, amount);
      return "";
-@@ -83,6 +138,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -83,6 +137,11 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      uint64 remoteChainSelector,
      bytes memory
    ) external virtual override onlyOffRamp(remoteChainSelector) whenHealthy {
@@ -136,7 +137,7 @@ index 1a17fa0398..7de31fa91e 100644
      _consumeInboundRateLimit(remoteChainSelector, amount);
      getToken().safeTransfer(receiver, amount);
      emit Released(msg.sender, receiver, amount);
-@@ -120,11 +180,48 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -120,11 +179,48 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      s_rateLimitAdmin = rateLimitAdmin;
    }
 
@@ -185,7 +186,7 @@ index 1a17fa0398..7de31fa91e 100644
    /// @notice Checks if the pool can accept liquidity.
    /// @return true if the pool can accept liquidity, false otherwise.
    function canAcceptLiquidity() external view returns (bool) {
-@@ -151,7 +248,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -151,7 +247,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
      emit LiquidityRemoved(msg.sender, amount);
    }
 
