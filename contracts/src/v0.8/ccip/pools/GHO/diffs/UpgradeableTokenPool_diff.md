@@ -6,35 +6,31 @@ index b3571bb449..aa86725ef6 100644
 @@ -1,21 +1,24 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
--
++pragma solidity ^0.8.0;
+
 -import {IPool} from "../interfaces/pools/IPool.sol";
 -import {IARM} from "../interfaces/IARM.sol";
 -import {IRouter} from "../interfaces/IRouter.sol";
--
++import {IPool} from "../../interfaces/pools/IPool.sol";
++import {IARM} from "../../interfaces/IARM.sol";
++import {IRouter} from "../../interfaces/IRouter.sol";
+
 -import {OwnerIsCreator} from "../../shared/access/OwnerIsCreator.sol";
 -import {RateLimiter} from "../libraries/RateLimiter.sol";
--
++import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
++import {RateLimiter} from "../../libraries/RateLimiter.sol";
+
 -import {IERC20} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
 -import {IERC165} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
 -import {EnumerableSet} from "../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
--
++import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
++import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
++import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
+
 -/// @notice Base abstract class with common functions for all token pools.
 -/// A token pool serves as isolated place for holding tokens and token specific logic
 -/// that may execute as tokens move across the bridge.
 -abstract contract TokenPool is IPool, OwnerIsCreator, IERC165 {
-+pragma solidity ^0.8.0;
-+
-+import {IPool} from "../../interfaces/pools/IPool.sol";
-+import {IARM} from "../../interfaces/IARM.sol";
-+import {IRouter} from "../../interfaces/IRouter.sol";
-+
-+import {OwnerIsCreator} from "../../../shared/access/OwnerIsCreator.sol";
-+import {RateLimiter} from "../../libraries/RateLimiter.sol";
-+
-+import {IERC20} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/token/ERC20/IERC20.sol";
-+import {IERC165} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/introspection/IERC165.sol";
-+import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contracts/utils/structs/EnumerableSet.sol";
-+
 +/// @title UpgradeableTokenPool
 +/// @author Aave Labs
 +/// @notice Upgradeable version of Chainlink's CCIP TokenPool
