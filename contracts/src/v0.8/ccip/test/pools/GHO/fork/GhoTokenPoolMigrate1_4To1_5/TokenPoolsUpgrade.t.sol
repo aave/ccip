@@ -81,40 +81,122 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
 
   function testReleaseOrMintVia1_2OffRamp() public {
     uint256 amount = 10e18;
+    Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
+
+    // off ramp on L1
     {
+      // build message
+      vm.selectFork(l2.forkId);
+      message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l2.token), amount: amount});
+      uint256 feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
+      Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
+        message,
+        l2.EVM2EVMOnRamp1_5,
+        feeTokenAmount,
+        alice,
+        false
+      );
+
+      // test off ramp
       vm.selectFork(l1.forkId);
+
       uint256 balanceBefore = l1.token.balanceOf(alice);
-      // mock release on legacy offramp
+
+      vm.expectEmit(address(l1.tokenPool));
+      emit Released(address(l1.EVM2EVMOffRamp1_2), alice, amount);
       vm.prank(address(l1.EVM2EVMOffRamp1_2));
-      l1.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l2.chainSelector, "");
+      l1.EVM2EVMOffRamp1_2.executeSingleMessage(eventArg, new bytes[](message.tokenAmounts.length));
+
       assertEq(l1.token.balanceOf(alice), balanceBefore + amount);
     }
+
+    // off ramp on L2
     {
+      // build message
+      vm.selectFork(l1.forkId);
+      message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l1.token), amount: amount});
+      uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
+      Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
+        message,
+        l1.EVM2EVMOnRamp1_5,
+        feeTokenAmount,
+        alice,
+        true
+      );
+
+      // test off ramp
       vm.selectFork(l2.forkId);
+
       uint256 balanceBefore = l2.token.balanceOf(alice);
-      // mock release on legacy offramp
+
+      vm.expectEmit(address(l2.tokenPool));
+      emit Minted(address(l2.EVM2EVMOffRamp1_2), alice, amount);
       vm.prank(address(l2.EVM2EVMOffRamp1_2));
-      l2.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l1.chainSelector, "");
+      l2.EVM2EVMOffRamp1_2.executeSingleMessage(eventArg, new bytes[](message.tokenAmounts.length));
+
       assertEq(l2.token.balanceOf(alice), balanceBefore + amount);
     }
   }
 
   function testReleaseOrMintVia1_5OffRamp() public {
     uint256 amount = 10e18;
+    Client.EVM2AnyMessage memory message = _generateMessage(alice, 1);
+
+    // off ramp on L1
     {
+      // build message
+      vm.selectFork(l2.forkId);
+      message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l2.token), amount: amount});
+      uint256 feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
+      Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
+        message,
+        l2.EVM2EVMOnRamp1_5,
+        feeTokenAmount,
+        alice,
+        false
+      );
+
+      // test off ramp
       vm.selectFork(l1.forkId);
+
       uint256 balanceBefore = l1.token.balanceOf(alice);
-      // mock release on legacy offramp
+
+      vm.expectEmit(address(l1.tokenPool));
+      emit Released(address(l1.proxyPool), alice, amount);
+      vm.expectEmit(address(l1.proxyPool));
+      emit Released(address(l1.EVM2EVMOffRamp1_5), alice, amount);
       vm.prank(address(l1.EVM2EVMOffRamp1_5));
-      l1.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l2.chainSelector, "");
+      l1.EVM2EVMOffRamp1_5.executeSingleMessage(eventArg, new bytes[](message.tokenAmounts.length), new uint32[](0));
+
       assertEq(l1.token.balanceOf(alice), balanceBefore + amount);
     }
+
+    // off ramp on L2
     {
+      // build message
+      vm.selectFork(l1.forkId);
+      message.tokenAmounts[0] = Client.EVMTokenAmount({token: address(l1.token), amount: amount});
+      uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
+      Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
+        message,
+        l1.EVM2EVMOnRamp1_5,
+        feeTokenAmount,
+        alice,
+        true
+      );
+
+      // test off ramp
       vm.selectFork(l2.forkId);
+
       uint256 balanceBefore = l2.token.balanceOf(alice);
-      // mock release on legacy offramp
+
+      vm.expectEmit(address(l2.tokenPool));
+      emit Minted(address(l2.proxyPool), alice, amount);
+      vm.expectEmit(address(l2.proxyPool));
+      emit Minted(address(l2.EVM2EVMOffRamp1_5), alice, amount);
       vm.prank(address(l2.EVM2EVMOffRamp1_5));
-      l2.tokenPool.releaseOrMint(abi.encode(alice), alice, amount, l1.chainSelector, "");
+      l2.EVM2EVMOffRamp1_5.executeSingleMessage(eventArg, new bytes[](message.tokenAmounts.length), new uint32[](0));
+
       assertEq(l2.token.balanceOf(alice), balanceBefore + amount);
     }
   }
