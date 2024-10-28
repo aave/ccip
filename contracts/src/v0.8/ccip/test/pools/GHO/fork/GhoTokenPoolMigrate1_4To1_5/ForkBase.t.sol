@@ -12,8 +12,6 @@ import {Client} from "../../../../../libraries/Client.sol";
 import {Internal} from "../../../../../libraries/Internal.sol";
 import {UpgradeableLockReleaseTokenPool_Sepolia} from "./LegacyTestnetTokenPools/UpgradeableLockReleaseTokenPool_Sepolia.sol";
 import {UpgradeableBurnMintTokenPool_ArbSepolia} from "./LegacyTestnetTokenPools/UpgradeableBurnMintTokenPool_ArbSepolia.sol";
-import {EVM2EVMOffRamp} from "../../../../../offRamp/EVM2EVMOffRamp.sol";
-import {TransparentUpgradeableProxy} from "solidity-utils/contracts/transparent-proxy/TransparentUpgradeableProxy.sol";
 
 interface IRouter is IRouterClient, IRouterBase {
   struct OffRamp {
@@ -276,11 +274,6 @@ contract ForkPoolAfterMigration is ForkBase {
 }
 
 contract ForkPoolBeforeMigration is ForkBase {
-  event Locked(address indexed sender, uint256 amount);
-  event Burned(address indexed sender, uint256 amount);
-  event Released(address indexed sender, address indexed recipient, uint256 amount);
-  event Minted(address indexed sender, address indexed recipient, uint256 amount);
-
   uint256 internal constant BLOCK_BEFORE_MIGRATION_L1 = 6673089;
   uint256 internal constant BLOCK_BEFORE_MIGRATION_L2 = 79570677;
 
