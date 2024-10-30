@@ -6,10 +6,11 @@ import {IERC20} from "../../../../../../vendor/openzeppelin-solidity/v4.8.3/cont
 import {ITypeAndVersion} from "../../../../../../shared/interfaces/ITypeAndVersion.sol";
 import {IRouterClient} from "../../../../../interfaces/IRouterClient.sol";
 import {IEVM2AnyOnRamp} from "../../../../../interfaces/IEVM2AnyOnRamp.sol";
-import {IAny2EVMOffRamp} from "../../../../../interfaces/IAny2EVMOffRamp.sol";
 import {IRouter as IRouterBase} from "../../../../../interfaces/IRouter.sol";
 import {Client} from "../../../../../libraries/Client.sol";
 import {Internal} from "../../../../../libraries/Internal.sol";
+import {IEVM2EVMOffRamp_1_2, IEVM2EVMOffRamp_1_5} from "../../../../helpers/interfaces/IEVM2EVMOffRamp.sol";
+import {IEVM2EVMOnRamp_1_2, IEVM2EVMOnRamp_1_5} from "../../../../helpers/interfaces/IEVM2EVMOnRamp.sol";
 import {UpgradeableLockReleaseTokenPool_Sepolia} from "./LegacyTestnetTokenPools/UpgradeableLockReleaseTokenPool_Sepolia.sol";
 import {UpgradeableBurnMintTokenPool_ArbSepolia} from "./LegacyTestnetTokenPools/UpgradeableBurnMintTokenPool_ArbSepolia.sol";
 
@@ -21,18 +22,6 @@ interface IRouter is IRouterClient, IRouterBase {
   function getWrappedNative() external view returns (address);
   function isOffRamp(uint64, address) external view returns (bool);
   function getOffRamps() external view returns (OffRamp[] memory);
-}
-
-interface IEVM2EVMOffRamp_1_2 is IAny2EVMOffRamp, ITypeAndVersion {
-  function executeSingleMessage(Internal.EVM2EVMMessage memory message, bytes[] memory offchainTokenData) external;
-}
-
-interface IEVM2EVMOffRamp_1_5 is IAny2EVMOffRamp, ITypeAndVersion {
-  function executeSingleMessage(
-    Internal.EVM2EVMMessage calldata message,
-    bytes[] calldata offchainTokenData,
-    uint32[] memory tokenGasOverrides
-  ) external;
 }
 
 struct SourceTokenData {
@@ -55,8 +44,8 @@ contract ForkBase is Test {
     UpgradeableLockReleaseTokenPool_Sepolia tokenPool;
     IRouter router;
     IERC20 token;
-    IEVM2AnyOnRamp EVM2EVMOnRamp1_2;
-    IEVM2AnyOnRamp EVM2EVMOnRamp1_5;
+    IEVM2EVMOnRamp_1_2 EVM2EVMOnRamp1_2;
+    IEVM2EVMOnRamp_1_5 EVM2EVMOnRamp1_5;
     IEVM2EVMOffRamp_1_2 EVM2EVMOffRamp1_2;
     IEVM2EVMOffRamp_1_5 EVM2EVMOffRamp1_5;
     address proxyPool;
@@ -68,8 +57,8 @@ contract ForkBase is Test {
     UpgradeableBurnMintTokenPool_ArbSepolia tokenPool;
     IRouter router;
     IERC20 token;
-    IEVM2AnyOnRamp EVM2EVMOnRamp1_2;
-    IEVM2AnyOnRamp EVM2EVMOnRamp1_5;
+    IEVM2EVMOnRamp_1_2 EVM2EVMOnRamp1_2;
+    IEVM2EVMOnRamp_1_5 EVM2EVMOnRamp1_5;
     IEVM2EVMOffRamp_1_2 EVM2EVMOffRamp1_2;
     IEVM2EVMOffRamp_1_5 EVM2EVMOffRamp1_5;
     address proxyPool;
@@ -96,8 +85,8 @@ contract ForkBase is Test {
     l1.router = IRouter(l1.tokenPool.getRouter());
     l2.chainSelector = l1.tokenPool.getSupportedChains()[0];
     l1.token = l1.tokenPool.getToken();
-    l1.EVM2EVMOnRamp1_2 = IEVM2AnyOnRamp(0xe4Dd3B16E09c016402585a8aDFdB4A18f772a07e); // legacy on ramp
-    l1.EVM2EVMOnRamp1_5 = IEVM2AnyOnRamp(l1.router.getOnRamp(l2.chainSelector));
+    l1.EVM2EVMOnRamp1_2 = IEVM2EVMOnRamp_1_2(0xe4Dd3B16E09c016402585a8aDFdB4A18f772a07e); // legacy on ramp
+    l1.EVM2EVMOnRamp1_5 = IEVM2EVMOnRamp_1_5(l1.router.getOnRamp(l2.chainSelector));
     l1.EVM2EVMOffRamp1_2 = IEVM2EVMOffRamp_1_2(0xF18896AB20a09A29e64fdEbA99FDb8EC328f43b1);
     l1.EVM2EVMOffRamp1_5 = IEVM2EVMOffRamp_1_5(0xD2f5edfD4561d6E7599F6c6888Bd353cAFd0c55E);
     vm.prank(alice);
@@ -111,8 +100,8 @@ contract ForkBase is Test {
     l2.router = IRouter(l2.tokenPool.getRouter());
     l1.chainSelector = l2.tokenPool.getSupportedChains()[0];
     l2.token = l2.tokenPool.getToken();
-    l2.EVM2EVMOnRamp1_2 = IEVM2AnyOnRamp(0x4205E1Ca0202A248A5D42F5975A8FE56F3E302e9); // legacy on ramp
-    l2.EVM2EVMOnRamp1_5 = IEVM2AnyOnRamp(l2.router.getOnRamp(l1.chainSelector));
+    l2.EVM2EVMOnRamp1_2 = IEVM2EVMOnRamp_1_2(0x4205E1Ca0202A248A5D42F5975A8FE56F3E302e9); // legacy on ramp
+    l2.EVM2EVMOnRamp1_5 = IEVM2EVMOnRamp_1_5(l2.router.getOnRamp(l1.chainSelector));
     l2.EVM2EVMOffRamp1_2 = IEVM2EVMOffRamp_1_2(0x1c71f141b4630EBE52d6aF4894812960abE207eB);
     l2.EVM2EVMOffRamp1_5 = IEVM2EVMOffRamp_1_5(0xBed6e9131916d724418C8a6FE810F727302a5c00);
     vm.prank(alice);
@@ -129,8 +118,8 @@ contract ForkBase is Test {
     assertEq(l1.token.balanceOf(alice), 1000e18);
     assertEq(ITypeAndVersion(address(l1.router)).typeAndVersion(), "Router 1.2.0");
     assertEq(ITypeAndVersion(l1.proxyPool).typeAndVersion(), "LockReleaseTokenPoolAndProxy 1.5.0");
-    assertEq(ITypeAndVersion(address(l1.EVM2EVMOnRamp1_2)).typeAndVersion(), "EVM2EVMOnRamp 1.2.0");
-    assertEq(ITypeAndVersion(address(l1.EVM2EVMOnRamp1_5)).typeAndVersion(), "EVM2EVMOnRamp 1.5.0");
+    assertEq(l1.EVM2EVMOnRamp1_2.typeAndVersion(), "EVM2EVMOnRamp 1.2.0");
+    assertEq(l1.EVM2EVMOnRamp1_5.typeAndVersion(), "EVM2EVMOnRamp 1.5.0");
     assertEq(l1.EVM2EVMOffRamp1_2.typeAndVersion(), "EVM2EVMOffRamp 1.2.0");
     assertEq(l1.EVM2EVMOffRamp1_5.typeAndVersion(), "EVM2EVMOffRamp 1.5.0");
     assertTrue(l1.router.isOffRamp(l2.chainSelector, address(l1.EVM2EVMOffRamp1_2)));
@@ -142,8 +131,8 @@ contract ForkBase is Test {
     assertEq(l2.token.balanceOf(alice), 1000e18);
     assertEq(ITypeAndVersion(address(l2.router)).typeAndVersion(), "Router 1.2.0");
     assertEq(ITypeAndVersion(l2.proxyPool).typeAndVersion(), "BurnMintTokenPoolAndProxy 1.5.0");
-    assertEq(ITypeAndVersion(address(l2.EVM2EVMOnRamp1_2)).typeAndVersion(), "EVM2EVMOnRamp 1.2.0");
-    assertEq(ITypeAndVersion(address(l2.EVM2EVMOnRamp1_5)).typeAndVersion(), "EVM2EVMOnRamp 1.5.0");
+    assertEq(l2.EVM2EVMOnRamp1_2.typeAndVersion(), "EVM2EVMOnRamp 1.2.0");
+    assertEq(l2.EVM2EVMOnRamp1_5.typeAndVersion(), "EVM2EVMOnRamp 1.5.0");
     assertEq(l2.EVM2EVMOffRamp1_2.typeAndVersion(), "EVM2EVMOffRamp 1.2.0");
     assertEq(l2.EVM2EVMOffRamp1_5.typeAndVersion(), "EVM2EVMOffRamp 1.5.0");
     assertTrue(l2.router.isOffRamp(l1.chainSelector, address(l2.EVM2EVMOffRamp1_2)));
@@ -168,7 +157,7 @@ contract ForkBase is Test {
 
   function _messageToEvent(
     Client.EVM2AnyMessage memory message,
-    IEVM2AnyOnRamp onRamp,
+    address onRamp,
     uint256 feeTokenAmount,
     address originalSender,
     bool isL1
@@ -180,10 +169,10 @@ contract ForkBase is Test {
     }
     Client.EVMExtraArgsV1 memory extraArgs = abi.decode(args, (Client.EVMExtraArgsV1));
     Internal.EVM2EVMMessage memory messageEvent = Internal.EVM2EVMMessage({
-      sequenceNumber: onRamp.getExpectedNextSequenceNumber(),
+      sequenceNumber: IEVM2AnyOnRamp(onRamp).getExpectedNextSequenceNumber(),
       feeTokenAmount: feeTokenAmount,
       sender: originalSender,
-      nonce: onRamp.getSenderNonce(originalSender) + 1,
+      nonce: IEVM2AnyOnRamp(onRamp).getSenderNonce(originalSender) + 1,
       gasLimit: extraArgs.gasLimit,
       strict: false,
       sourceChainSelector: isL1 ? l1.chainSelector : l2.chainSelector,
@@ -195,20 +184,36 @@ contract ForkBase is Test {
       messageId: ""
     });
 
-    for (uint256 i; i < message.tokenAmounts.length; ++i) {
-      // change introduced in 1.5 upgrade
-      messageEvent.sourceTokenData[i] = abi.encode(
-        SourceTokenData({
-          sourcePoolAddress: abi.encode(isL1 ? l1.proxyPool : l2.proxyPool),
-          destTokenAddress: abi.encode(address(isL1 ? l2.token : l1.token)),
-          extraData: "",
-          destGasAmount: 90000
-        })
-      );
+    if (_hasMigrated(isL1, onRamp)) {
+      for (uint256 i; i < message.tokenAmounts.length; ++i) {
+        // change introduced in 1.5 upgrade
+        messageEvent.sourceTokenData[i] = abi.encode(
+          SourceTokenData({
+            sourcePoolAddress: abi.encode(isL1 ? l1.proxyPool : l2.proxyPool),
+            destTokenAddress: abi.encode(address(isL1 ? l2.token : l1.token)),
+            extraData: "",
+            destGasAmount: _getDestGasAmount(onRamp, message.tokenAmounts[i].token)
+          })
+        );
+      }
     }
 
     messageEvent.messageId = Internal._hash(messageEvent, isL1 ? l1.metadataHash : l2.metadataHash);
     return messageEvent;
+  }
+
+  function _getDestGasAmount(address onRamp, address token) internal view returns (uint32) {
+    IEVM2EVMOnRamp_1_5.TokenTransferFeeConfig memory config = IEVM2EVMOnRamp_1_5(onRamp).getTokenTransferFeeConfig(
+      token
+    );
+    return
+      config.isEnabled
+        ? config.destGasOverhead
+        : IEVM2EVMOnRamp_1_5(onRamp).getDynamicConfig().defaultTokenDestGasOverhead;
+  }
+
+  function _hasMigrated(bool isL1, address onRamp) internal view returns (bool) {
+    return isL1 ? onRamp == address(l1.EVM2EVMOnRamp1_5) : onRamp == address(l2.EVM2EVMOnRamp1_5);
   }
 
   function _generateMetadataHash(uint64 sourceChainSelector, IEVM2AnyOnRamp onRamp) internal view returns (bytes32) {
@@ -286,7 +291,7 @@ contract ForkPoolBeforeMigration is ForkBase {
     l1.router = IRouter(l1.tokenPool.getRouter());
     l2.chainSelector = l1.tokenPool.getSupportedChains()[0];
     l1.token = l1.tokenPool.getToken();
-    l1.EVM2EVMOnRamp1_2 = IEVM2AnyOnRamp(l1.router.getOnRamp(l2.chainSelector));
+    l1.EVM2EVMOnRamp1_2 = IEVM2EVMOnRamp_1_2(l1.router.getOnRamp(l2.chainSelector));
     l1.EVM2EVMOffRamp1_2 = IEVM2EVMOffRamp_1_2(0xdb92e73d1D630B5B7aC96840c4df0c591c7Ad23E);
     vm.prank(alice);
     l1.token.approve(address(l1.router), type(uint256).max);
@@ -298,7 +303,7 @@ contract ForkPoolBeforeMigration is ForkBase {
     l2.router = IRouter(l2.tokenPool.getRouter());
     l1.chainSelector = l2.tokenPool.getSupportedChains()[0];
     l2.token = l2.tokenPool.getToken();
-    l2.EVM2EVMOnRamp1_2 = IEVM2AnyOnRamp(l2.router.getOnRamp(l1.chainSelector));
+    l2.EVM2EVMOnRamp1_2 = IEVM2EVMOnRamp_1_2(l2.router.getOnRamp(l1.chainSelector));
     l2.EVM2EVMOffRamp1_2 = IEVM2EVMOffRamp_1_2(0xFf5e1c597c5DFfC896Ab8c7b9d876D513518c4b7);
     vm.prank(alice);
     l2.token.approve(address(l2.router), type(uint256).max);
@@ -396,7 +401,7 @@ contract ForkPoolBeforeMigration is ForkBase {
       uint256 feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
       Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
         message,
-        l2.EVM2EVMOnRamp1_2,
+        address(l2.EVM2EVMOnRamp1_2),
         feeTokenAmount,
         alice,
         false
@@ -423,7 +428,7 @@ contract ForkPoolBeforeMigration is ForkBase {
       uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
       Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
         message,
-        l1.EVM2EVMOnRamp1_2,
+        address(l1.EVM2EVMOnRamp1_2),
         feeTokenAmount,
         alice,
         true

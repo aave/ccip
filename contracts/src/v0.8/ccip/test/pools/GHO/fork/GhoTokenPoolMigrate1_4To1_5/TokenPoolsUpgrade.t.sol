@@ -43,7 +43,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
       // router uses 1_5 onRamp
       assertEq(l1.router.getOnRamp(l2.chainSelector), address(l1.EVM2EVMOnRamp1_5));
       vm.expectEmit();
-      emit CCIPSendRequested(_messageToEvent(message, l1.EVM2EVMOnRamp1_5, feeTokenAmount, alice, true));
+      emit CCIPSendRequested(_messageToEvent(message, address(l1.EVM2EVMOnRamp1_5), feeTokenAmount, alice, true));
       vm.prank(alice);
       l1.router.ccipSend{value: feeTokenAmount}(l2.chainSelector, message);
     }
@@ -57,7 +57,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
       // router uses 1_5 onRamp
       assertEq(l2.router.getOnRamp(l1.chainSelector), address(l2.EVM2EVMOnRamp1_5));
       vm.expectEmit();
-      emit CCIPSendRequested(_messageToEvent(message, l2.EVM2EVMOnRamp1_5, feeTokenAmount, alice, false));
+      emit CCIPSendRequested(_messageToEvent(message, address(l2.EVM2EVMOnRamp1_5), feeTokenAmount, alice, false));
       vm.prank(alice);
       l2.router.ccipSend{value: feeTokenAmount}(l1.chainSelector, message);
     }
@@ -91,7 +91,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
       uint256 feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
       Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
         message,
-        l2.EVM2EVMOnRamp1_5,
+        address(l2.EVM2EVMOnRamp1_5),
         feeTokenAmount,
         alice,
         false
@@ -118,7 +118,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
       uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
       Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
         message,
-        l1.EVM2EVMOnRamp1_5,
+        address(l1.EVM2EVMOnRamp1_5),
         feeTokenAmount,
         alice,
         true
@@ -150,7 +150,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
       uint256 feeTokenAmount = l2.router.getFee(l1.chainSelector, message);
       Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
         message,
-        l2.EVM2EVMOnRamp1_5,
+        address(l2.EVM2EVMOnRamp1_5),
         feeTokenAmount,
         alice,
         false
@@ -179,7 +179,7 @@ contract ForkPoolUpgradeAfterMigration is ForkBase {
       uint256 feeTokenAmount = l1.router.getFee(l2.chainSelector, message);
       Internal.EVM2EVMMessage memory eventArg = _messageToEvent(
         message,
-        l1.EVM2EVMOnRamp1_5,
+        address(l1.EVM2EVMOnRamp1_5),
         feeTokenAmount,
         alice,
         true
