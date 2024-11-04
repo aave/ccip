@@ -17,7 +17,7 @@ import {EnumerableSet} from "../../../vendor/openzeppelin-solidity/v4.8.3/contra
 /// @notice Upgradeable version of Chainlink's CCIP TokenPool
 /// @dev Contract adaptations:
 ///   - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
-///   - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
+///   - Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
   using EnumerableSet for EnumerableSet.AddressSet;
   using EnumerableSet for EnumerableSet.UintSet;

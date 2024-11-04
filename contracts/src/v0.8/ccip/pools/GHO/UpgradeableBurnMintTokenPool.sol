@@ -18,7 +18,7 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Move of allowlist and router definition to initialization stage
 /// - Inclusion of rate limit admin who may configure rate limits in addition to owner
 /// - Modifications from inherited contract (see contract for more details):
-///   - UpgradeableTokenPool: Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
+///   - UpgradeableTokenPool: Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
   error Unauthorized(address caller);
 

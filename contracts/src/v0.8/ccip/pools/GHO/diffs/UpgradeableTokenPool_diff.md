@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/TokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
-index b3571bb449..7cae344a2e 100644
+index b3571bb449..9c294974bc 100644
 --- a/src/v0.8/ccip/pools/TokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableTokenPool.sol
 @@ -1,21 +1,24 @@
@@ -36,7 +36,7 @@ index b3571bb449..7cae344a2e 100644
 +/// @notice Upgradeable version of Chainlink's CCIP TokenPool
 +/// @dev Contract adaptations:
 +///   - Setters & Getters for new ProxyPool (to support 1.5 CCIP migration on the existing 1.4 Pool)
-+///   - Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
++///   - Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 +abstract contract UpgradeableTokenPool is IPool, OwnerIsCreator, IERC165 {
    using EnumerableSet for EnumerableSet.AddressSet;
    using EnumerableSet for EnumerableSet.UintSet;

@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index 1a17fa0398..a055c8b8cd 100644
+index 1a17fa0398..4a63ab26ba 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
 @@ -1,26 +1,39 @@
@@ -38,7 +38,7 @@ index 1a17fa0398..a055c8b8cd 100644
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
 +/// - Modifications from inherited contract (see contract for more details):
-+///   - UpgradeableTokenPool: Modify `onlyOnRamp` modifier to accept transactions from ProxyPool
++///   - UpgradeableTokenPool: Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 +contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool, ILiquidityContainer, ITypeAndVersion {
    using SafeERC20 for IERC20;
 
