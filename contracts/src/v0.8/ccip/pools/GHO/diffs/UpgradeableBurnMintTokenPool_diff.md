@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 9af0f22f4c..df7c49cb95 100644
+index 9af0f22f4c..f19106fd4d 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,28 +1,102 @@
+@@ -1,28 +1,101 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.19;
 +pragma solidity ^0.8.0;
@@ -107,12 +107,11 @@ index 9af0f22f4c..df7c49cb95 100644
 +    _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
 +  }
 +
-+  /// @notice This function allows the owner to burn `amount` of the pool's token. This is
-+  /// expected to be called while migrating facilitators by offboarding this facilitator in
-+  /// favor of a new token pool.
-+  /// @dev New token pool should mint and transfer liquidity to this pool (since this pool
-+  /// does not hold tokens at any point in time) which can be burnt and hence will reduce
-+  /// the facilitator bucket level on GHO.
++  /// @notice Burn an amount of tokens with no additional logic.
++  /// @dev This GHO-specific functionality is designed for migrating bucket levels between
++  /// facilitators. The new pool is expected to mint amount of tokens, while the old pool
++  /// burns an equivalent amount. This ensures the facilitator can be offboarded, as all
++  /// liquidity minted by it must be fully burned
 +  /// @param amount The amount of tokens to burn.
 +  function directBurn(uint256 amount) external onlyOwner {
 +    _burn(amount);

@@ -85,12 +85,11 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
   }
 
-  /// @notice This function allows the owner to burn `amount` of the pool's token. This is
-  /// expected to be called while migrating facilitators by offboarding this facilitator in
-  /// favor of a new token pool.
-  /// @dev New token pool should mint and transfer liquidity to this pool (since this pool
-  /// does not hold tokens at any point in time) which can be burnt and hence will reduce
-  /// the facilitator bucket level on GHO.
+  /// @notice Burn an amount of tokens with no additional logic.
+  /// @dev This GHO-specific functionality is designed for migrating bucket levels between
+  /// facilitators. The new pool is expected to mint amount of tokens, while the old pool
+  /// burns an equivalent amount. This ensures the facilitator can be offboarded, as all
+  /// liquidity minted by it must be fully burned
   /// @param amount The amount of tokens to burn.
   function directBurn(uint256 amount) external onlyOwner {
     _burn(amount);
