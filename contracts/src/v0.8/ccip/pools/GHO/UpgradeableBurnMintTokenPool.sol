@@ -40,7 +40,7 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     if (router == address(0) || owner_ == address(0)) revert ZeroAddressNotAllowed();
 
     _transferOwnership(owner_);
-    s_router = IRouter(router);
+    _getTokenPoolStorage().s_router = IRouter(router);
     if (i_allowlistEnabled) _applyAllowListUpdates(new address[](0), allowlist);
   }
 

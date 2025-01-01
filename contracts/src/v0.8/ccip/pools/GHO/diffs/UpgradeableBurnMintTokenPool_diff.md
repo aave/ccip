@@ -1,6 +1,6 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..80ef621eff 100644
+index 30203a4ced..5f1480d301 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
 @@ -1,33 +1,74 @@
@@ -61,7 +61,7 @@ index 30203a4ced..80ef621eff 100644
 +    if (router == address(0) || owner_ == address(0)) revert ZeroAddressNotAllowed();
 +
 +    _transferOwnership(owner_);
-+    s_router = IRouter(router);
++    _getTokenPoolStorage().s_router = IRouter(router);
 +    if (i_allowlistEnabled) _applyAllowListUpdates(new address[](0), allowlist);
 +  }
 +

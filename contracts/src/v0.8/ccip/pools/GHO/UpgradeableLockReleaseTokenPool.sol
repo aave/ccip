@@ -50,17 +50,23 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// and CCIP is facilitating mint/burn on all the other chains, in which case the invariant
   /// balanceOf(pool) on home chain >= sum(totalSupply(mint/burn "wrapped" token) on all remote chains) should always hold
   bool internal immutable i_acceptLiquidity;
-  /// @notice The address of the rebalancer.
-  address internal s_rebalancer;
 
-  /// @notice Maximum amount of tokens that can be bridged to other chains
-  uint256 private s_bridgeLimit;
-  /// @notice Amount of tokens bridged (transferred out)
-  /// @dev Must always be equal to or below the bridge limit
-  uint256 private s_currentBridged;
-  /// @notice The address of the bridge limit admin.
-  /// @dev Can be address(0) if none is configured.
-  address internal s_bridgeLimitAdmin;
+  /// @custom:storage-location erc7201:aave-ccip.storage.UpgradeableLockReleaseTokenPool
+  struct UpgradeableLockReleaseTokenPoolStorage {
+    /// @notice The address of the rebalancer.
+    address s_rebalancer;
+    /// @notice Maximum amount of tokens that can be bridged to other chains
+    uint256 s_bridgeLimit;
+    /// @notice Amount of tokens bridged (transferred out)
+    /// @dev Must always be equal to or below the bridge limit
+    uint256 s_currentBridged;
+    /// @notice The address of the bridge limit admin.
+    /// @dev Can be address(0) if none is configured.
+    address s_bridgeLimitAdmin;
+  }
+
+  // bytes32 private constant lockReleasePoolStorage = keccak256(abi.encode(uint256(keccak256("aave-ccip.storage.UpgradeableLockReleaseTokenPool")) - 1)) & ~bytes32(uint256(0xff))
+  bytes32 private constant lockReleasePoolStorage = 0x0f06852668cdd7d8554206875bc1ed67644f9d2a4b038c34789cc8b26cb42300;
 
   // @notice Constructor
   // @param token The bridgeable token that is managed by this pool.
@@ -94,9 +100,9 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
     if (router == address(0) || owner_ == address(0)) revert ZeroAddressNotAllowed();
 
     _transferOwnership(owner_);
-    s_router = IRouter(router);
+    _getTokenPoolStorage().s_router = IRouter(router);
     if (i_allowlistEnabled) _applyAllowListUpdates(new address[](0), allowlist);
-    s_bridgeLimit = bridgeLimit;
+    _getLockReleasePoolStorage().s_bridgeLimit = bridgeLimit;
   }
 
   /// @notice Locks the token in the pool
@@ -104,8 +110,10 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   function lockOrBurn(
     Pool.LockOrBurnInV1 calldata lockOrBurnIn
   ) external virtual override returns (Pool.LockOrBurnOutV1 memory) {
+    UpgradeableLockReleaseTokenPoolStorage storage $ = _getLockReleasePoolStorage();
+
     // Increase bridged amount because tokens are leaving the source chain
-    if ((s_currentBridged += lockOrBurnIn.amount) > s_bridgeLimit) revert BridgeLimitExceeded(s_bridgeLimit);
+    if (($.s_currentBridged += lockOrBurnIn.amount) > $.s_bridgeLimit) revert BridgeLimitExceeded($.s_bridgeLimit);
 
     _validateLockOrBurn(lockOrBurnIn);
 
@@ -123,10 +131,12 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   function releaseOrMint(
     Pool.ReleaseOrMintInV1 calldata releaseOrMintIn
   ) external virtual override returns (Pool.ReleaseOrMintOutV1 memory) {
+    UpgradeableLockReleaseTokenPoolStorage storage $ = _getLockReleasePoolStorage();
+
     // This should never occur. Amount should never exceed the current bridged amount
-    if (releaseOrMintIn.amount > s_currentBridged) revert NotEnoughBridgedAmount();
+    if (releaseOrMintIn.amount > $.s_currentBridged) revert NotEnoughBridgedAmount();
     // Reduce bridged amount because tokens are back to source chain
-    s_currentBridged -= releaseOrMintIn.amount;
+    $.s_currentBridged -= releaseOrMintIn.amount;
 
     _validateReleaseOrMint(releaseOrMintIn);
 
@@ -152,13 +162,13 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @notice Gets LiquidityManager, can be address(0) if none is configured.
   /// @return The current liquidity manager.
   function getRebalancer() external view returns (address) {
-    return s_rebalancer;
+    return _getLockReleasePoolStorage().s_rebalancer;
   }
 
   /// @notice Sets the LiquidityManager address.
   /// @dev Only callable by the owner.
   function setRebalancer(address rebalancer) external onlyOwner {
-    s_rebalancer = rebalancer;
+    _getLockReleasePoolStorage().s_rebalancer = rebalancer;
   }
 
   /// @notice Sets the current bridged amount to other chains
@@ -166,7 +176,7 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @dev Does not emit event, it is expected to only be called during token pool migrations.
   /// @param newCurrentBridged The new bridged amount
   function setCurrentBridgedAmount(uint256 newCurrentBridged) external onlyOwner {
-    s_currentBridged = newCurrentBridged;
+    _getLockReleasePoolStorage().s_currentBridged = newCurrentBridged;
   }
 
   /// @notice Sets the bridge limit, the maximum amount of tokens that can be bridged out
@@ -174,9 +184,11 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @dev Bridge limit changes should be carefully managed, specially when reducing below the current bridged amount
   /// @param newBridgeLimit The new bridge limit
   function setBridgeLimit(uint256 newBridgeLimit) external {
-    if (msg.sender != s_bridgeLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
-    uint256 oldBridgeLimit = s_bridgeLimit;
-    s_bridgeLimit = newBridgeLimit;
+    UpgradeableLockReleaseTokenPoolStorage storage $ = _getLockReleasePoolStorage();
+
+    if (msg.sender != $.s_bridgeLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
+    uint256 oldBridgeLimit = $.s_bridgeLimit;
+    $.s_bridgeLimit = newBridgeLimit;
     emit BridgeLimitUpdated(oldBridgeLimit, newBridgeLimit);
   }
 
@@ -184,26 +196,28 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @dev Only callable by the owner.
   /// @param bridgeLimitAdmin The new bridge limit admin address.
   function setBridgeLimitAdmin(address bridgeLimitAdmin) external onlyOwner {
-    address oldAdmin = s_bridgeLimitAdmin;
-    s_bridgeLimitAdmin = bridgeLimitAdmin;
+    UpgradeableLockReleaseTokenPoolStorage storage $ = _getLockReleasePoolStorage();
+
+    address oldAdmin = $.s_bridgeLimitAdmin;
+    $.s_bridgeLimitAdmin = bridgeLimitAdmin;
     emit BridgeLimitAdminUpdated(oldAdmin, bridgeLimitAdmin);
   }
 
   /// @notice Gets the bridge limit
   /// @return The maximum amount of tokens that can be transferred out to other chains
   function getBridgeLimit() external view virtual returns (uint256) {
-    return s_bridgeLimit;
+    return _getLockReleasePoolStorage().s_bridgeLimit;
   }
 
   /// @notice Gets the current bridged amount to other chains
   /// @return The amount of tokens transferred out to other chains
   function getCurrentBridgedAmount() external view virtual returns (uint256) {
-    return s_currentBridged;
+    return _getLockReleasePoolStorage().s_currentBridged;
   }
 
   /// @notice Gets the bridge limiter admin address.
   function getBridgeLimitAdmin() external view returns (address) {
-    return s_bridgeLimitAdmin;
+    return _getLockReleasePoolStorage().s_bridgeLimitAdmin;
   }
 
   /// @notice Checks if the pool can accept liquidity.
@@ -216,7 +230,7 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @param amount The amount of liquidity to provide.
   function provideLiquidity(uint256 amount) external {
     if (!i_acceptLiquidity) revert LiquidityNotAccepted();
-    if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
+    if (_getLockReleasePoolStorage().s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
 
     i_token.safeTransferFrom(msg.sender, address(this), amount);
     emit LiquidityAdded(msg.sender, amount);
@@ -225,7 +239,7 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
   /// @notice Removed liquidity to the pool. The tokens will be sent to msg.sender.
   /// @param amount The amount of liquidity to remove.
   function withdrawLiquidity(uint256 amount) external {
-    if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
+    if (_getLockReleasePoolStorage().s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
 
     if (i_token.balanceOf(address(this)) < amount) revert InsufficientLiquidity();
     i_token.safeTransfer(msg.sender, amount);
@@ -247,5 +261,11 @@ contract UpgradeableLockReleaseTokenPool is Initializable, UpgradeableTokenPool,
     UpgradeableLockReleaseTokenPool(from).withdrawLiquidity(amount);
 
     emit LiquidityTransferred(from, amount);
+  }
+
+  function _getLockReleasePoolStorage() internal pure returns (UpgradeableLockReleaseTokenPoolStorage storage $) {
+    assembly ("memory-safe") {
+      $.slot := lockReleasePoolStorage
+    }
   }
 }
