@@ -2,4 +2,4 @@
 "chainlink": minor
 ---
 
-Added nonce validation immediately after broadcast for Hedera #internal
+Added nonce validation immediately after broadcasted for Hedera #internal

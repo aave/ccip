@@ -2,4 +2,4 @@
 "chainlink": patch
 ---
 
-#added #nops Add Zircuit Configs
+#Added #nops Add Zircuit Configs

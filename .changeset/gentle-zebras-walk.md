@@ -2,4 +2,4 @@
 "ccip": patch
 ---
 
-Bumped chain selectors
+Bump chain selectors
