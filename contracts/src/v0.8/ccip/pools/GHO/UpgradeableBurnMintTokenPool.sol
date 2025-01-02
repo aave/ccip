@@ -17,6 +17,7 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Implementation of Initializable to allow upgrades
 /// - Move of allowlist and router definition to initialization stage
 /// - Inclusion of rate limit admin who may configure rate limits in addition to owner
+/// - Addition of authorized function to to directly burn liquidity, thereby reducing the facilitator's bucket level.
 /// - Modifications from inherited contract (see contract for more details):
 ///   - UpgradeableTokenPool: Modify `onlyOnRamp` & `onlyOffRamp` modifier to accept transactions from ProxyPool
 contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintTokenPoolAbstract, ITypeAndVersion {
@@ -82,6 +83,16 @@ contract UpgradeableBurnMintTokenPool is Initializable, UpgradeableBurnMintToken
     if (msg.sender != s_rateLimitAdmin && msg.sender != owner()) revert Unauthorized(msg.sender);
 
     _setRateLimitConfig(remoteChainSelector, outboundConfig, inboundConfig);
+  }
+
+  /// @notice Burn an amount of tokens with no additional logic.
+  /// @dev This GHO-specific functionality is designed for migrating bucket levels between
+  /// facilitators. The new pool is expected to mint amount of tokens, while the old pool
+  /// burns an equivalent amount. This ensures the facilitator can be offboarded, as all
+  /// liquidity minted by it must be fully burned
+  /// @param amount The amount of tokens to burn.
+  function directBurn(uint256 amount) external onlyOwner {
+    _burn(amount);
   }
 
   /// @inheritdoc UpgradeableBurnMintTokenPoolAbstract
