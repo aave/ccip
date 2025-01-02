@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/BurnMintTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-index 30203a4ced..80ef621eff 100644
+index 30203a4ced..6c1813f51d 100644
 --- a/src/v0.8/ccip/pools/BurnMintTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol
-@@ -1,33 +1,74 @@
+@@ -1,33 +1,75 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -29,8 +29,9 @@ index 30203a4ced..80ef621eff 100644
 +/// - Move of allowlist and router definition to initialization stage
 +/// - Addition of authorized functions to to directly mint/burn liquidity, thereby increasing/reducing the facilitator's bucket level.
 +/// - Modifications from inherited contract (see contract for more details):
-+///    - UpgradeableTokenPool: Remove i_token decimal check in constructor
-+///    - Add storage `__gap` for future upgrades.
++///    - UpgradeableTokenPool:
++///       - Remove i_token decimal check in constructor
++///       - Add storage `__gap` for future upgrades.
 
 -/// @notice This pool mints and burns a 3rd-party token.
  /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.

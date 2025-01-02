@@ -18,8 +18,9 @@ import {IRouter} from "../../interfaces/IRouter.sol";
 /// - Move of allowlist and router definition to initialization stage
 /// - Addition of authorized functions to to directly mint/burn liquidity, thereby increasing/reducing the facilitator's bucket level.
 /// - Modifications from inherited contract (see contract for more details):
-///    - UpgradeableTokenPool: Remove i_token decimal check in constructor
-///    - Add storage `__gap` for future upgrades.
+///    - UpgradeableTokenPool:
+///       - Remove i_token decimal check in constructor
+///       - Add storage `__gap` for future upgrades.
 
 /// @dev Pool whitelisting mode is set in the constructor and cannot be modified later.
 /// It either accepts any address as originalSender, or only accepts whitelisted originalSender.

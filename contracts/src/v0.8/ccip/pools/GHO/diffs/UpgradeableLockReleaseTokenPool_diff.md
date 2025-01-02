@@ -1,9 +1,9 @@
 ```diff
 diff --git a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-index ecc28a14dd..5d5e055299 100644
+index ecc28a14dd..f8ed82bcc7 100644
 --- a/src/v0.8/ccip/pools/LockReleaseTokenPool.sol
 +++ b/src/v0.8/ccip/pools/GHO/UpgradeableLockReleaseTokenPool.sol
-@@ -1,25 +1,45 @@
+@@ -1,25 +1,46 @@
  // SPDX-License-Identifier: BUSL-1.1
 -pragma solidity 0.8.24;
 +pragma solidity ^0.8.0;
@@ -38,8 +38,9 @@ index ecc28a14dd..5d5e055299 100644
 +/// - Addition of a bridge limit to regulate the maximum amount of tokens that can be transferred out (burned/locked)
 +/// - Addition of authorized function to update amount of tokens that are currently bridged
 +/// - Modifications from inherited contract (see contract for more details):
-+///    - UpgradeableTokenPool: Remove i_token decimal check in constructor
-+///    - Add storage `__gap` for future upgrades.
++///    - UpgradeableTokenPool
++///       - Remove i_token decimal check in constructor
++///       - Add storage `__gap` for future upgrades.
 +
 +/// @dev Token pool used for tokens on their native chain. This uses a lock and release mechanism.
  /// Because of lock/unlock requiring liquidity, this pool contract also has function to add and remove
@@ -59,7 +60,7 @@ index ecc28a14dd..5d5e055299 100644
 
    event LiquidityTransferred(address indexed from, uint256 amount);
 
-@@ -33,30 +53,69 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -33,30 +54,69 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @notice The address of the rebalancer.
    address internal s_rebalancer;
 
@@ -138,7 +139,7 @@ index ecc28a14dd..5d5e055299 100644
    }
 
    /// @notice Release tokens from the pool to the recipient
-@@ -64,11 +123,18 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -64,11 +124,18 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    function releaseOrMint(
      Pool.ReleaseOrMintInV1 calldata releaseOrMintIn
    ) external virtual override returns (Pool.ReleaseOrMintOutV1 memory) {
@@ -159,7 +160,7 @@ index ecc28a14dd..5d5e055299 100644
 
      // Release to the recipient
      getToken().safeTransfer(releaseOrMintIn.receiver, localAmount);
-@@ -79,9 +145,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -79,9 +146,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    }
 
    /// @inheritdoc IERC165
@@ -170,7 +171,7 @@ index ecc28a14dd..5d5e055299 100644
      return interfaceId == type(ILiquidityContainer).interfaceId || super.supportsInterface(interfaceId);
    }
 
-@@ -93,12 +157,55 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -93,12 +158,55 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
 
    /// @notice Sets the LiquidityManager address.
    /// @dev Only callable by the owner.
@@ -229,7 +230,7 @@ index ecc28a14dd..5d5e055299 100644
    /// @notice Checks if the pool can accept liquidity.
    /// @return true if the pool can accept liquidity, false otherwise.
    function canAcceptLiquidity() external view returns (bool) {
-@@ -107,9 +214,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -107,9 +215,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
 
    /// @notice Adds liquidity to the pool. The tokens should be approved first.
    /// @param amount The amount of liquidity to provide.
@@ -240,7 +241,7 @@ index ecc28a14dd..5d5e055299 100644
      if (!i_acceptLiquidity) revert LiquidityNotAccepted();
      if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
 
-@@ -119,9 +224,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -119,9 +225,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
 
    /// @notice Removed liquidity to the pool. The tokens will be sent to msg.sender.
    /// @param amount The amount of liquidity to remove.
@@ -251,7 +252,7 @@ index ecc28a14dd..5d5e055299 100644
      if (s_rebalancer != msg.sender) revert Unauthorized(msg.sender);
 
      if (i_token.balanceOf(address(this)) < amount) revert InsufficientLiquidity();
-@@ -141,7 +244,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
+@@ -141,7 +245,7 @@ contract LockReleaseTokenPool is TokenPool, ILiquidityContainer, ITypeAndVersion
    /// @param from The address of the old pool.
    /// @param amount The amount of liquidity to transfer.
    function transferLiquidity(address from, uint256 amount) external onlyOwner {
