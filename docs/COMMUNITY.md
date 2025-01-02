@@ -2,7 +2,7 @@
 
 [![Discord](https://img.shields.io/discord/592041321326182401?style=flat-square&logo=discord)](https://discordapp.com/invite/aSK4zew)
 [![Subreddit subscribers](https://img.shields.io/reddit/subreddit-subscribers/Chainlink?logo=reddit&style=flat-square)](https://www.reddit.com/r/Chainlink/)
-[![Twitter Follow](https://img.shields.io/twitter/follow/chainlink?logo=twitter&style=flat-square)](https://twitter.com/chainlink)
+[![Twitter Follow](https://img.shields.io/twitter/follow/chainlink?logo=&style=flat-square)](https://twitter.com/chainlink)
 [![Telegram](https://img.shields.io/badge/Telegram-Follow-blue?style=flat-square&logo=telegram)](https://t.me/chainlinkofficial)
 [![YouTube Channel](https://img.shields.io/badge/YouTube-Subscribe-red?style=flat-square&logo=youtube)](https://www.youtube.com/chainlinkofficial)
 [![WeChat](https://img.shields.io/badge/WeChat-Follow-green?style=flat-square&logo=wechat)](https://blog.chain.link/chainlink-chinese-communities/)

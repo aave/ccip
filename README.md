@@ -136,7 +136,7 @@ For more information on creating and using external adapters, please see our [ex
 
 We use `cosign` with OIDC keyless signing during the [Build, Sign and Publish Chainlink](https://github.com/smartcontractkit/chainlink/actions/workflows/build-publish.yml) workflow.
 
-It is encourage for any node operator building from the official Chainlink docker image to verify the tagged release version was did indeed built from this workflow.
+It is encouraged for any node operator building from the official Chainlink docker image to verify the tagged release version was did indeed built from this workflow.
 
 You will need `cosign` in order to do this verification. [Follow the instruction here to install cosign](https://docs.sigstore.dev/system_config/installation/).
 
