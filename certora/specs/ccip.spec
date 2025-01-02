@@ -9,6 +9,7 @@ methods {
   function getCurrentBridgedAmount() external returns (uint256) envfree;
   function getBridgeLimit() external returns (uint256) envfree;
   function owner() external returns (address) envfree;
+  function getRebalancer() external returns (address) envfree;
 }
 
 
@@ -93,9 +94,9 @@ rule only_lockOrBurn_can_increase_currentBridged(env e, method f)
 
 
 /* ==============================================================================
-   rule: only_releaseOrMint_currentBridged
+   rule: only_releaseOrMint_can_decrease_currentBridged
    ============================================================================*/
-rule only_releaseOrMint_currentBridged(env e, method f) 
+rule only_releaseOrMint_can_decrease_currentBridged(env e, method f) 
   filtered { f -> filterSetter(f) }
 {
   calldataarg args;
@@ -121,6 +122,7 @@ rule only_bridgeLimitAdmin_or_owner_can_call_setBridgeLimit(env e) {
   assert e.msg.sender==getBridgeLimitAdmin(e) || e.msg.sender==owner();
 }
 
+
 /* ==============================================================================
    rule: only_owner_can_call_setCurrentBridgedAmount
    ============================================================================*/
@@ -130,4 +132,25 @@ rule only_owner_can_call_setCurrentBridgedAmount(env e) {
   setCurrentBridgedAmount(e, newBridgedAmount);
   
   assert e.msg.sender==owner();
+}
+
+/* ==============================================================================
+   rule: only_rebalancer_can_call_provideLiquidity
+   ============================================================================*/
+rule only_rebalancer_can_call_provideLiquidity(env e) {
+  uint256 amount;
+  provideLiquidity(e, amount);
+  
+  assert e.msg.sender==getRebalancer();
+}
+
+
+/* ==============================================================================
+   rule: only_rebalancer_can_call_withdrawLiquidity
+   ============================================================================*/
+rule only_rebalancer_can_call_withdrawLiquidity(env e) {
+  uint256 amount;
+  withdrawLiquidity(e, amount);
+  
+  assert e.msg.sender==getRebalancer();
 }
