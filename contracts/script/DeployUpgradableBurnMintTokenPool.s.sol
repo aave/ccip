@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
 
-import {Script, console2 as console} from "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2 as console} from "forge-std/console2.sol";
+import {stdJson} from "forge-std/StdJson.sol";
 
 import {UpgradeableBurnMintTokenPool} from "./../src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol";
 import {ITransparentProxyFactory} from "solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol";
@@ -11,26 +13,32 @@ interface IProxyAdmin {
   function UPGRADE_INTERFACE_VERSION() external view returns (string memory);
 }
 
+struct Config {
+  IERC20Metadata GHO_TOKEN;
+  address OWNER;
+  ITransparentProxyFactory PROXY_FACTORY;
+  address RMN_PROXY;
+  address ROUTER;
+}
+
 contract DeployUpgradableBurnMintTokenPool is Script {
+  using stdJson for string;
+
   function run() external {
-    IERC20Metadata GHO_TOKEN = IERC20Metadata(vm.promptAddress("GHO_TOKEN"));
-    uint8 TOKEN_DECIMALS = _validateTokenAndFetchDecimals(GHO_TOKEN);
-    ITransparentProxyFactory PROXY_FACTORY = ITransparentProxyFactory(vm.promptAddress("TRANSPARENT_PROXY_FACTORY"));
-    address OWNER = vm.promptAddress("OWNER");
-    address ROUTER = vm.promptAddress("ROUTER");
-    address RMN_PROXY = vm.promptAddress("RMN_PROXY");
+    Config memory config = this.parseConfig();
+    uint8 TOKEN_DECIMALS = _validateTokenAndFetchDecimals(config.GHO_TOKEN);
 
     address[] memory ALLOW_LIST = new address[](0);
     bool ALLOW_LIST_ENABLED = false;
 
     vm.startBroadcast();
     address tokenPool = address(
-      new UpgradeableBurnMintTokenPool(address(GHO_TOKEN), TOKEN_DECIMALS, RMN_PROXY, ALLOW_LIST_ENABLED)
+      new UpgradeableBurnMintTokenPool(address(config.GHO_TOKEN), TOKEN_DECIMALS, config.RMN_PROXY, ALLOW_LIST_ENABLED)
     );
-    address tokenPoolProxy = PROXY_FACTORY.create(
+    address tokenPoolProxy = config.PROXY_FACTORY.create(
       tokenPool,
-      OWNER,
-      abi.encodeCall(UpgradeableBurnMintTokenPool.initialize, (OWNER, ALLOW_LIST, ROUTER))
+      config.OWNER,
+      abi.encodeCall(UpgradeableBurnMintTokenPool.initialize, (config.OWNER, ALLOW_LIST, config.ROUTER))
     );
     vm.stopBroadcast();
 
@@ -40,8 +48,13 @@ contract DeployUpgradableBurnMintTokenPool is Script {
     _validateProxyAdminVersion(tokenPoolProxy);
   }
 
+  function parseConfig() external view returns (Config memory) {
+    string memory config = vm.readFile(string.concat(vm.projectRoot(), "/script/config.json"));
+    return abi.decode(vm.parseJson(config, string.concat(".", vm.toString(block.chainid))), (Config));
+  }
+
   function _validateTokenAndFetchDecimals(IERC20Metadata token) internal view returns (uint8) {
-    require(_cmp(token.name(), "GHO"), "InvalidToken");
+    require(_cmp(token.name(), "Gho Token"), "InvalidToken");
     require(_cmp(token.symbol(), "GHO"), "InvalidToken");
     return token.decimals();
   }
