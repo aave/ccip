@@ -6,6 +6,7 @@ import {console2 as console} from "forge-std/console2.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 
 import {UpgradeableBurnMintTokenPool} from "./../src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol";
+import {ITypeAndVersion} from "./../src/v0.8/shared/interfaces/ITypeAndVersion.sol";
 import {ITransparentProxyFactory} from "solidity-utils/contracts/transparent-proxy/interfaces/ITransparentProxyFactory.sol";
 import {IERC20Metadata} from "solidity-utils/contracts/oz-common/interfaces/IERC20Metadata.sol";
 
@@ -14,28 +15,31 @@ interface IProxyAdmin {
 }
 
 struct Config {
-  IERC20Metadata GHO_TOKEN;
+  address GHO_TOKEN;
   address OWNER;
-  ITransparentProxyFactory PROXY_FACTORY;
+  address PROXY_FACTORY;
   address RMN_PROXY;
   address ROUTER;
 }
 
+/// @notice Deploys UpgradeableBurnMintTokenPool behind a transparent upgradable proxy for GHO.
+/// Pre-requisite: add parameters to config.json, the with key as `chainId` of the target network.
+/// Usage: forge script DeployUpgradableBurnMintTokenPool --rpc-url <RPC_URL> --private-key <PRIVATE_KEY> --broadcast --verify --etherscan-api-key <ETHERSCAN_API_KEY>
 contract DeployUpgradableBurnMintTokenPool is Script {
   using stdJson for string;
 
   function run() external {
-    Config memory config = this.parseConfig();
-    uint8 TOKEN_DECIMALS = _validateTokenAndFetchDecimals(config.GHO_TOKEN);
+    Config memory config = _parseConfig();
 
+    uint8 TOKEN_DECIMALS = IERC20Metadata(config.GHO_TOKEN).decimals();
     address[] memory ALLOW_LIST = new address[](0);
     bool ALLOW_LIST_ENABLED = false;
 
     vm.startBroadcast();
     address tokenPool = address(
-      new UpgradeableBurnMintTokenPool(address(config.GHO_TOKEN), TOKEN_DECIMALS, config.RMN_PROXY, ALLOW_LIST_ENABLED)
+      new UpgradeableBurnMintTokenPool(config.GHO_TOKEN, TOKEN_DECIMALS, config.RMN_PROXY, ALLOW_LIST_ENABLED)
     );
-    address tokenPoolProxy = config.PROXY_FACTORY.create(
+    address tokenPoolProxy = ITransparentProxyFactory(config.PROXY_FACTORY).create(
       tokenPool,
       config.OWNER,
       abi.encodeCall(UpgradeableBurnMintTokenPool.initialize, (config.OWNER, ALLOW_LIST, config.ROUTER))
@@ -43,20 +47,24 @@ contract DeployUpgradableBurnMintTokenPool is Script {
     vm.stopBroadcast();
 
     console.log("tokenPoolProxy: ", tokenPoolProxy);
-    console.log("tokenPool: ", tokenPool);
+    console.log("tokenPool:      ", tokenPool);
 
     _validateProxyAdminVersion(tokenPoolProxy);
   }
 
-  function parseConfig() external view returns (Config memory) {
+  function _parseConfig() internal view returns (Config memory) {
     string memory config = vm.readFile(string.concat(vm.projectRoot(), "/script/config.json"));
-    return abi.decode(vm.parseJson(config, string.concat(".", vm.toString(block.chainid))), (Config));
+    return _validate(abi.decode(vm.parseJson(config, string.concat(".", vm.toString(block.chainid))), (Config)));
   }
 
-  function _validateTokenAndFetchDecimals(IERC20Metadata token) internal view returns (uint8) {
-    require(_cmp(token.name(), "Gho Token"), "InvalidToken");
-    require(_cmp(token.symbol(), "GHO"), "InvalidToken");
-    return token.decimals();
+  function _validate(Config memory config) internal view returns (Config memory) {
+    require(address(config.OWNER) != address(0), "InvalidOwner");
+    require(address(config.PROXY_FACTORY) != address(0), "InvalidProxyFactory");
+    require(_cmp(IERC20Metadata(config.GHO_TOKEN).name(), "Gho Token"), "InvalidToken");
+    require(_cmp(IERC20Metadata(config.GHO_TOKEN).symbol(), "GHO"), "InvalidToken");
+    require(_cmp(ITypeAndVersion(config.RMN_PROXY).typeAndVersion(), "ARMProxy 1.0.0"), "InvalidRmnProxy");
+    require(_cmp(ITypeAndVersion(config.ROUTER).typeAndVersion(), "Router 1.2.0"), "InvalidRouter");
+    return config;
   }
 
   function _validateProxyAdminVersion(address proxy) internal view {
