@@ -10,6 +10,7 @@ cache_path = 'foundry-cache'
 libs = ['node_modules', 'foundry-lib']
 bytecode_hash = "none"
 ffi = false
+allow_internal_expect_revert = true
 
 # default is zero, using a non-zero amount enables us to test e.g. billing based on gas prices.
 gas_price = 1
@@ -26,6 +27,7 @@ single_line_statement_blocks = "preserve"
 solc_version = '0.8.24'
 src = 'src/v0.8/ccip'
 test = 'src/v0.8/ccip/test'
+script = 'script'
 optimizer_runs = 800
 evm_version = 'paris'
 
