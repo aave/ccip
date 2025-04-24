@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import {Script} from "forge-std/Script.sol";
 import {console2 as console} from "forge-std/console2.sol";
-import {stdJson} from "forge-std/StdJson.sol";
 
 import {TransparentUpgradeableProxy, ProxyAdmin} from "@oz/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import {UpgradeableBurnMintTokenPool} from "./../src/v0.8/ccip/pools/GHO/UpgradeableBurnMintTokenPool.sol";
@@ -22,8 +21,6 @@ struct Config {
 /// Pre-requisite: add parameters to config.json, the with key as `chainId` of the target network.
 /// Usage: FOUNDRY_PROFILE=ccip forge script DeployUpgradableBurnMintTokenPool --rpc-url <RPC_URL> --private-key <PRIVATE_KEY> --broadcast --verify --etherscan-api-key <ETHERSCAN_API_KEY>
 contract DeployUpgradableBurnMintTokenPool is Script {
-  using stdJson for string;
-
   function run() external {
     Config memory config = _parseConfig();
 
