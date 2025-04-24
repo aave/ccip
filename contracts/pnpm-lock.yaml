@@ -30,11 +30,11 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(@nomicfoundation/hardhat-verify@2.0.9(hardhat@2.20.1(ts-node@10.9.2(@types/node@20.14.15)(typescript@5.5.4))(typescript@5.5.4)))(hardhat@2.20.1(ts-node@10.9.2(@types/node@20.14.15)(typescript@5.5.4))(typescript@5.5.4))
       '@openzeppelin/contracts':
-        specifier: 4.9.3
-        version: 4.9.3
+        specifier: 5.1.0
+        version: 5.1.0
       '@openzeppelin/contracts-upgradeable':
-        specifier: 4.9.3
-        version: 4.9.3
+        specifier: 5.1.0
+        version: 5.1.0(@openzeppelin/contracts@5.1.0)
       '@scroll-tech/contracts':
         specifier: 0.1.0
         version: 0.1.0
@@ -630,8 +630,10 @@ packages:
   '@openzeppelin/contracts-upgradeable@4.8.3':
     resolution: {integrity: sha512-SXDRl7HKpl2WDoJpn7CK/M9U4Z8gNXDHHChAKh0Iz+Wew3wu6CmFYBeie3je8V0GSXZAIYYwUktSrnW/kwVPtg==}
 
-  '@openzeppelin/contracts-upgradeable@4.9.3':
-    resolution: {integrity: sha512-jjaHAVRMrE4UuZNfDwjlLGDxTHWIOwTJS2ldnc278a0gevfXfPr8hxKEVBGFBE96kl2G3VHDZhUimw/+G3TG2A==}
+  '@openzeppelin/contracts-upgradeable@5.1.0':
+    resolution: {integrity: sha512-AIElwP5Ck+cslNE+Hkemf5SxjJoF4wBvvjxc27Rp+9jaPs/CLIaUBMYe1FNzhdiN0cYuwGRmYaRHmmntuiju4Q==}
+    peerDependencies:
+      '@openzeppelin/contracts': 5.1.0
 
   '@openzeppelin/contracts@4.5.0':
     resolution: {integrity: sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==}
@@ -642,8 +644,8 @@ packages:
   '@openzeppelin/contracts@4.8.3':
     resolution: {integrity: sha512-bQHV8R9Me8IaJoJ2vPG4rXcL7seB7YVuskr4f+f5RyOStSZetwzkWtoqDMl5erkBJy0lDRUnIR2WIkPiC0GJlg==}
 
-  '@openzeppelin/contracts@4.9.3':
-    resolution: {integrity: sha512-He3LieZ1pP2TNt5JbkPA4PNT9WC3gOTOlDcFGJW4Le4QKqwmiNJCRt44APfxMxvq7OugU/cqYuPcSBzOw38DAg==}
+  '@openzeppelin/contracts@5.1.0':
+    resolution: {integrity: sha512-p1ULhl7BXzjjbha5aqst+QMLY+4/LCWADXOCsmLHRM77AqiPjnd9vvUN9sosUfhL9JGKpZ0TjEGxgvnizmWGSA==}
 
   '@openzeppelin/upgrades-core@1.34.4':
     resolution: {integrity: sha512-iGN3StqYHYVqqSKs8hWY+Gz6VkiEqOkQccBhHl7lHLGBJF91QUZ8wNMZ59SA5Usg1Fstu/HurvZTCEshPJAZ8w==}
@@ -4529,7 +4531,9 @@ snapshots:
 
   '@openzeppelin/contracts-upgradeable@4.8.3': {}
 
-  '@openzeppelin/contracts-upgradeable@4.9.3': {}
+  '@openzeppelin/contracts-upgradeable@5.1.0(@openzeppelin/contracts@5.1.0)':
+    dependencies:
+      '@openzeppelin/contracts': 5.1.0
 
   '@openzeppelin/contracts@4.5.0': {}
 
@@ -4537,7 +4541,7 @@ snapshots:
 
   '@openzeppelin/contracts@4.8.3': {}
 
-  '@openzeppelin/contracts@4.9.3': {}
+  '@openzeppelin/contracts@5.1.0': {}
 
   '@openzeppelin/upgrades-core@1.34.4':
     dependencies:
