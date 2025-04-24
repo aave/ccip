@@ -47,7 +47,7 @@ contract DeployUpgradableBurnMintTokenPool is Script {
     console.log("tokenPoolProxy          ", tokenPoolProxy);
     console.log("tokenPoolImplementation ", tokenPool);
 
-    _validateProxyAdminVersion(tokenPoolProxy);
+    _validate(tokenPoolProxy, config);
   }
 
   function _parseConfig() internal view returns (Config memory) {
@@ -64,8 +64,12 @@ contract DeployUpgradableBurnMintTokenPool is Script {
     return config;
   }
 
-  function _validateProxyAdminVersion(address proxy) internal view {
+  function _validate(address proxy, Config memory config) internal view {
     require(_cmp(_getProxyAdmin(proxy).UPGRADE_INTERFACE_VERSION(), "5.0.0"), "InvalidProxyAdminVersion");
+    require(_getProxyAdmin(proxy).owner() == config.OWNER, "InvalidProxyAdminOwner");
+    require(address(UpgradeableBurnMintTokenPool(proxy).getToken()) == config.GHO_TOKEN, "InvalidToken");
+    require(UpgradeableBurnMintTokenPool(proxy).getRmnProxy() == config.RMN_PROXY, "InvalidRmnProxy");
+    require(UpgradeableBurnMintTokenPool(proxy).getRouter() == config.ROUTER, "InvalidRouter");
   }
 
   function _getProxyAdmin(address proxy) internal view returns (ProxyAdmin) {
