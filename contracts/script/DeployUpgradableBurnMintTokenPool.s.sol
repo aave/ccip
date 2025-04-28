@@ -13,13 +13,14 @@ import {ITypeAndVersion} from "./../src/v0.8/shared/interfaces/ITypeAndVersion.s
 struct Config {
   address GHO_TOKEN;
   address OWNER;
+  address PROXY_ADMIN_OWNER;
   address RMN_PROXY;
   address ROUTER;
 }
 
 /// @notice Deploys UpgradeableBurnMintTokenPool behind a transparent upgradable proxy for GHO.
 /// Pre-requisite: add parameters to config.json, the with key as `chainId` of the target network.
-/// Usage: FOUNDRY_PROFILE=ccip forge script DeployUpgradableBurnMintTokenPool --rpc-url <RPC_URL> --private-key <PRIVATE_KEY> --broadcast --verify --etherscan-api-key <ETHERSCAN_API_KEY>
+/// Usage: FOUNDRY_PROFILE=ccip forge script DeployUpgradableBurnMintTokenPool --rpc-url <RPC_URL> --private-key <PRIVATE_KEY> --broadcast --verify --etherscan-api-key <ETHERSCAN_API_KEY> --slow
 contract DeployUpgradableBurnMintTokenPool is Script {
   function run() external {
     Config memory config = _parseConfig();
@@ -35,7 +36,7 @@ contract DeployUpgradableBurnMintTokenPool is Script {
     address tokenPoolProxy = address(
       new TransparentUpgradeableProxy({
         _logic: tokenPool,
-        initialOwner: config.OWNER,
+        initialOwner: config.PROXY_ADMIN_OWNER,
         _data: abi.encodeCall(UpgradeableBurnMintTokenPool.initialize, (config.OWNER, ALLOW_LIST, config.ROUTER))
       })
     );
@@ -54,6 +55,7 @@ contract DeployUpgradableBurnMintTokenPool is Script {
 
   function _validate(Config memory config) internal view returns (Config memory) {
     require(address(config.OWNER) != address(0), "InvalidOwner");
+    require(address(config.PROXY_ADMIN_OWNER) != address(0), "InvalidOwner");
     require(_cmp(IERC20Metadata(config.GHO_TOKEN).name(), "Gho Token"), "InvalidToken");
     require(_cmp(IERC20Metadata(config.GHO_TOKEN).symbol(), "GHO"), "InvalidToken");
     require(_cmp(ITypeAndVersion(config.RMN_PROXY).typeAndVersion(), "ARMProxy 1.0.0"), "InvalidRmnProxy");
@@ -63,7 +65,7 @@ contract DeployUpgradableBurnMintTokenPool is Script {
 
   function _validate(address proxy, Config memory config) internal view {
     require(_cmp(_getProxyAdmin(proxy).UPGRADE_INTERFACE_VERSION(), "5.0.0"), "InvalidProxyAdminVersion");
-    require(_getProxyAdmin(proxy).owner() == config.OWNER, "InvalidProxyAdminOwner");
+    require(_getProxyAdmin(proxy).owner() == config.PROXY_ADMIN_OWNER, "InvalidProxyAdminOwner");
     require(address(UpgradeableBurnMintTokenPool(proxy).getToken()) == config.GHO_TOKEN, "InvalidToken");
     require(UpgradeableBurnMintTokenPool(proxy).getRmnProxy() == config.RMN_PROXY, "InvalidRmnProxy");
     require(UpgradeableBurnMintTokenPool(proxy).getRouter() == config.ROUTER, "InvalidRouter");
