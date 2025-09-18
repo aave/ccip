@@ -10,6 +10,7 @@ cache_path = 'foundry-cache'
 libs = ['node_modules', 'foundry-lib']
 bytecode_hash = "none"
 ffi = false
+allow_internal_expect_revert = true
 
 # default is zero, using a non-zero amount enables us to test e.g. billing based on gas prices.
 gas_price = 1
@@ -26,8 +27,10 @@ single_line_statement_blocks = "preserve"
 solc_version = '0.8.24'
 src = 'src/v0.8/ccip'
 test = 'src/v0.8/ccip/test'
+script = 'script'
 optimizer_runs = 800
 evm_version = 'paris'
+fs_permissions = [{ access = "read", path = "./script/config.json" }]
 
 [profile.functions]
 solc_version = '0.8.19'
@@ -96,6 +99,35 @@ optimizer_runs = 1_000_000
 src = 'src/v0.8/shared'
 test = 'src/v0.8/shared/test'
 solc_version = '0.8.24'
+
+[rpc_endpoints]
+mainnet = "${RPC_MAINNET}"
+optimism = "${RPC_OPTIMISM}"
+avalanche = "${RPC_AVALANCHE}"
+polygon = "${RPC_POLYGON}"
+arbitrum = "${RPC_ARBITRUM}"
+fantom = "${RPC_FANTOM}"
+harmony = "${RPC_HARMONY}"
+metis = "${RPC_METIS}"
+base = "${RPC_BASE}"
+zkevm = "${RPC_ZKEVM}"
+gnosis = "${RPC_GNOSIS}"
+bnb = "${RPC_BNB}"
+celo = "${RPC_CELO}"
+
+[etherscan]
+mainnet = { key = "${ETHERSCAN_API_KEY_MAINNET}", chainId = 1 }
+optimism = { key = "${ETHERSCAN_API_KEY_OPTIMISM}", chainId = 10 }
+avalanche = { key = "${ETHERSCAN_API_KEY_AVALANCHE}", chainId = 43114 }
+polygon = { key = "${ETHERSCAN_API_KEY_POLYGON}", chainId = 137 }
+arbitrum = { key = "${ETHERSCAN_API_KEY_ARBITRUM}", chainId = 42161 }
+fantom = { key = "${ETHERSCAN_API_KEY_FANTOM}", chainId = 250 }
+metis = { key = "any", chainId = 1088, url = 'https://andromeda-explorer.metis.io/' }
+base = { key = "${ETHERSCAN_API_KEY_BASE}", chainId = 8453 }
+zkevm = { key = "${ETHERSCAN_API_KEY_ZKEVM}", chainId = 1101 }
+gnosis = { key = "${ETHERSCAN_API_KEY_GNOSIS}", chainId = 100 }
+bnb = { key = "${ETHERSCAN_API_KEY_BNB}", chainId = 56 }
+celo = { key = "${ETHERSCAN_API_KEY_CELO}", chainId = 42220 }
 
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

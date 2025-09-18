@@ -1,6 +1,6 @@
 forge-std/=src/v0.8/vendor/forge-std/src/
 
-@openzeppelin/=node_modules/@openzeppelin/
+@oz/=node_modules/@openzeppelin/
 @arbitrum/=node_modules/@arbitrum/
 hardhat/=node_modules/hardhat/
 @eth-optimism/=node_modules/@eth-optimism/
@@ -8,6 +8,7 @@ hardhat/=node_modules/hardhat/
 @zksync/=node_modules/@zksync/
 
 @aave/=foundry-lib/gho-core/lib/aave-token/
+@openzeppelin/=foundry-lib/gho-core/lib/openzeppelin-contracts/
 @aave-gho-core/=foundry-lib/gho-core/src/contracts/
 @aave/core-v3/=foundry-lib/gho-core/lib/aave-v3-core/
 @aave/periphery-v3/=foundry-lib/gho-core/lib/aave-v3-periphery/

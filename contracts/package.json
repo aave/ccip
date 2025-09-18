@@ -125,8 +125,8 @@
     "@changesets/cli": "~2.27.7",
     "@eth-optimism/contracts": "0.6.0",
     "@matterlabs/hardhat-zksync-verify": "^1.6.0",
-    "@openzeppelin/contracts": "4.9.3",
-    "@openzeppelin/contracts-upgradeable": "4.9.3",
+    "@openzeppelin/contracts": "5.1.0",
+    "@openzeppelin/contracts-upgradeable": "5.1.0",
     "@scroll-tech/contracts": "0.1.0",
     "@zksync/contracts": "git+https://github.com/matter-labs/era-contracts.git#446d391d34bdb48255d5f8fef8a8248925fc98b9",
     "semver": "^7.6.3"
